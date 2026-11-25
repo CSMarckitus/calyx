@@ -1,0 +1,124 @@
+syntax = "proto3";
+
+package calyx.core.v1;
+
+option go_package = "github.com/csmarckitus/calyx/packages/shared-types/go/corev1;corev1";
+
+import "google/protobuf/timestamp.proto";
+
+// Live events over gRPC, as an alternative to webhooks for clients that only use the core.
+service EventService {
+  // Streams events from the moment of the call. Delivery is at most once: events that happen
+  // while the client is disconnected are not replayed. Use webhooks with Redis for retries.
+  // The headers of the answer arrive when the subscription starts. The stream ends with
+  // UNAVAILABLE when the core stops.
+  rpc Subscribe (SubscribeRequest) returns (stream Event);
+}
+
+// Selects the events of Subscribe. An event must match both lists.
+message SubscribeRequest {
+  // Empty means every instance.
+  repeated string instance_names = 1;
+  // Empty means every event type.
+  repeated string event_types = 2;
+}
+
+// One event of an instance.
+message Event {
+  // The id of the event, a UUID. The webhook delivery of the event has the same id.
+  string id = 1;
+  // The name of the instance.
+  string instance_name = 2;
+  // Same names as in WebhookConfig.event.
+  string type = 3;
+  // The payload as JSON text. A Calyx event has the JSON of ConnectionUpdate, MessageReceived,
+  // MessageStatus or BulkFinished, and a raw event has the data of whatsmeow or of Meta.
+  string payload_json = 4;
+  // When Calyx made the event, in UTC.
+  google.protobuf.Timestamp occurred_at = 5;
+}
+
+// The payloads of the Calyx events. Each message describes the JSON of Event.payload_json
+// and of the "data" field of a webhook. Nothing sends these messages in binary form.
+
+// The payload of "connection.update".
+message ConnectionUpdate {
+  // An InstanceStatus value name without the "INSTANCE_STATUS_" prefix, for example "CONNECTED".
+  string status = 1;
+}
+
+// The payload of "message.received".
+message MessageReceived {
+  // The id of the message in WhatsApp.
+  string message_id = 1;
+  // The chat of the message: a JID for WHATSAPP_WEB, a phone number for META_CLOUD.
+  string chat_id = 2;
+  // WHATSAPP_WEB only: the phone number JID when chat_id is a LID, or the LID when it is a phone
+  // number JID. Absent for a group, or when it is not known.
+  optional string chat_alt_id = 3;
+  // Who sent the message, in the format of chat_id. In a group, it is a member of the group.
+  string from = 4;
+  // WHATSAPP_WEB only: the other address of the sender, in the format of chat_alt_id. Absent when
+  // it is not known.
+  optional string from_alt_id = 5;
+  // WHATSAPP_WEB: true for a message in a group, for a broadcast list and for a status post.
+  // META_CLOUD: always false.
+  bool is_group = 6;
+  // The name that the sender chose in WhatsApp. Absent when it is not known.
+  optional string push_name = 7;
+  // Unix time in seconds.
+  int64 timestamp = 8;
+  // The content type that the provider gives, for example "text" or "image". The values depend on
+  // the provider.
+  string type = 9;
+  // The text of the message; WHATSAPP_WEB also gives the caption of an image, a video or a
+  // document. Absent when there is none.
+  optional string text = 10;
+}
+
+// The payload of "message.status".
+message MessageStatus {
+  // The id of the message in WhatsApp. For a message of SendPlainText, it is the message_id of the
+  // answer.
+  string message_id = 1;
+  // The chat of the message: a JID for WHATSAPP_WEB, a phone number for META_CLOUD.
+  string chat_id = 2;
+  // WHATSAPP_WEB only: the phone number JID when chat_id is a LID, or the LID when it is a phone
+  // number JID. Absent for a group, or when it is not known.
+  optional string chat_alt_id = 3;
+  // A MessageDeliveryStatus value name without the "MESSAGE_DELIVERY_STATUS_" prefix, in lower
+  // case, for example "delivered".
+  string status = 4;
+}
+
+// The values of MessageStatus.status. No message field uses this enum.
+enum MessageDeliveryStatus {
+  // No value. No event has it.
+  MESSAGE_DELIVERY_STATUS_UNSPECIFIED = 0;
+  // META_CLOUD only: Meta sent the message.
+  MESSAGE_DELIVERY_STATUS_SENT = 1;
+  // The message reached a device of the recipient.
+  MESSAGE_DELIVERY_STATUS_DELIVERED = 2;
+  // The message was read. WHATSAPP_WEB also gives it when its media was played, or when the account
+  // itself reads a received message on another device.
+  MESSAGE_DELIVERY_STATUS_READ = 3;
+  // META_CLOUD: Meta did not deliver the message. WHATSAPP_WEB: WhatsApp reported a server error
+  // for the message.
+  MESSAGE_DELIVERY_STATUS_FAILED = 4;
+}
+
+// The payload of "bulk.finished".
+message BulkFinished {
+  // The id of the job, a UUID.
+  string job_id = 1;
+  // A BulkJobStatus value name without the "BULK_JOB_STATUS_" prefix, for example "COMPLETED".
+  string status = 2;
+  // The number of messages in the job.
+  int32 total_messages = 3;
+  // The number of messages that WhatsApp accepted.
+  int32 sent_messages = 4;
+  // The number of messages that failed or have an unknown result. The job does not try them again.
+  int32 failed_messages = 5;
+  // Why the job failed, a sentence for people. Absent when status is not FAILED.
+  optional string error = 6;
+}

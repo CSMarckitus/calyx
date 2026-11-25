@@ -1,0 +1,17 @@
+{
+  "name": "@calyx/backend",
+  "private": true,
+  "license": "AGPL-3.0-only",
+  "scripts": {
+    "dev": "go run ./cmd/backend serve",
+    "build": "go build -o dist/backend ./cmd/backend",
+    "test": "go test -race ./...",
+    "vet": "go vet ./...",
+    "lint": "go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.15.0 run --config ../../.golangci.yml --build-tags e2e,uiserver ./...",
+    "generate": "GOWORK=off go run github.com/sqlc-dev/sqlc/cmd/sqlc@v1.31.1 generate",
+    "generate:check": "GOWORK=off go run github.com/sqlc-dev/sqlc/cmd/sqlc@v1.31.1 diff",
+    "openapi:generate": "go run ./cmd/backend openapi > ../../packages/shared-types/openapi/backend.json.tmp && mv ../../packages/shared-types/openapi/backend.json.tmp ../../packages/shared-types/openapi/backend.json",
+    "openapi:check": "go run ./cmd/backend openapi | diff - ../../packages/shared-types/openapi/backend.json",
+    "db:test": "docker compose -f docker-compose.dev.yml --profile test up -d postgres-test"
+  }
+}

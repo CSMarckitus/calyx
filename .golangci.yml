@@ -1,0 +1,75 @@
+# golangci-lint v2 configuration for every Go module of the repository.
+# Run: pnpm --filter @calyx/backend lint   (or @calyx/core)
+version: "2"
+
+linters:
+  # The standard set: errcheck, govet, ineffassign, staticcheck, unused.
+  default: standard
+  enable:
+    - bodyclose # HTTP response bodies are closed
+    - depguard # architecture rules: which package may import which (see settings)
+    - errorlint # errors are compared with errors.Is / errors.As
+    - gocritic # common mistakes and clearer forms
+    - misspell # English spelling in code and comments
+    - nolintlint # every //nolint names its linter and says why
+    - revive # Go style: names, doc comments of exported names
+    - unconvert # no conversion to the same type
+    - usestdlibvars # http.MethodGet and similar instead of literals
+  settings:
+    # Architecture rules (fitness functions). A failure means a package crossed a layer boundary.
+    depguard:
+      rules:
+        backend-grpc-only-in-core-client:
+          files: ["**/apps/backend/**", "!**/apps/backend/internal/core/**", "!**/apps/backend/internal/testutil/**", "!$test"]
+          deny:
+            - pkg: "google.golang.org/grpc"
+              desc: "only internal/core talks to the core; use its types and errors"
+            - pkg: "github.com/csmarckitus/calyx/packages/shared-types/go"
+              desc: "only internal/core uses the generated gRPC code"
+        backend-entry-points-only-in-cmd:
+          files: ["**/apps/backend/**", "!**/apps/backend/cmd/**", "!$test"]
+          deny:
+            - pkg: "calyx/backend/internal/httpapi"
+              desc: "only cmd/backend wires the HTTP layer"
+            - pkg: "calyx/backend/internal/operator"
+              desc: "only cmd/backend wires the operator commands"
+        backend-huma-only-in-httpapi:
+          files: ["**/apps/backend/**", "!**/apps/backend/internal/httpapi/**"]
+          deny:
+            - pkg: "github.com/danielgtaylor/huma/v2"
+              desc: "only internal/httpapi uses Huma; the services return apierr.Error"
+        backend-services-know-no-http:
+          # The rules live in the services, so every entry point (HTTP, MCP, operator) gets them.
+          files: ["**/apps/backend/internal/**", "!**/apps/backend/internal/httpapi/**", "!**/apps/backend/internal/testutil/**", "!$test"]
+          deny:
+            - pkg: "net/http"
+              desc: "services do not know HTTP; return an apierr.Error instead"
+    nolintlint:
+      require-explanation: true
+      require-specific: true
+  exclusions:
+    # Generated code (sqlc, protoc) is never edited by hand.
+    generated: strict
+    presets:
+      - common-false-positives
+      - std-error-handling
+    rules:
+      # An unused parameter is normal when a function implements an interface.
+      - linters: [revive]
+        text: "^unused-parameter:"
+      # The code of the programs is internal: a doc comment on every exported name adds noise.
+      # The public Go SDK needs them, because they are the IDE documentation.
+      - linters: [revive]
+        text: "^exported:"
+        path-except: ^packages/client-sdk/go/
+
+formatters:
+  enable:
+    - gofmt # the standard Go format (gofumpt treats the module paths calyx/... as standard library)
+    - gci # import order, always three groups: standard library, external modules, calyx/...
+  settings:
+    gci:
+      sections:
+        - standard
+        - default
+        - prefix(calyx,github.com/csmarckitus/calyx)

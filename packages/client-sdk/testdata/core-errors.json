@@ -1,0 +1,80 @@
+{
+  "description": "Made by: go run ./internal/gen/coreerrors (in packages/client-sdk/go)",
+  "cases": [
+    {
+      "name": "calyx reason with metadata",
+      "grpcCode": 6,
+      "statusBase64": "CAYSF1RoZSBvdXRjb21lIGlzIHVua25vd24uGnoKKHR5cGUuZ29vZ2xlYXBpcy5jb20vZ29vZ2xlLnJwYy5FcnJvckluZm8STgohRVJST1JfUkVBU09OX1NFTkRfT1VUQ09NRV9VTktOT1dOEg1jYWx5eC5jb3JlLnYxGhoKAmF0EhQyMDI2LTExLTIwVDEwOjAwOjAwWg==",
+      "expected": {
+        "source": "core",
+        "code": "ERROR_REASON_SEND_OUTCOME_UNKNOWN",
+        "status": 6,
+        "retry": "check_if_sent",
+        "retryAfterSeconds": 0,
+        "metadata": {
+          "at": "2026-11-20T10:00:00Z"
+        }
+      }
+    },
+    {
+      "name": "other domain",
+      "grpcCode": 14,
+      "statusBase64": "CA4SDFF1b3RhIGVycm9yLhpOCih0eXBlLmdvb2dsZWFwaXMuY29tL2dvb2dsZS5ycGMuRXJyb3JJbmZvEiIKE1JBVEVfTElNSVRfRVhDRUVERUQSC2V4YW1wbGUuY29t",
+      "expected": {
+        "source": "core",
+        "code": "UNAVAILABLE",
+        "status": 14,
+        "retry": "retry_now",
+        "retryAfterSeconds": 0
+      }
+    },
+    {
+      "name": "empty reason",
+      "grpcCode": 5,
+      "statusBase64": "CAUSEU5vIHN1Y2ggaW5zdGFuY2UuGjsKKHR5cGUuZ29vZ2xlYXBpcy5jb20vZ29vZ2xlLnJwYy5FcnJvckluZm8SDxINY2FseXguY29yZS52MQ==",
+      "expected": {
+        "source": "core",
+        "code": "NOT_FOUND",
+        "status": 5,
+        "retry": "do_not_retry",
+        "retryAfterSeconds": 0
+      }
+    },
+    {
+      "name": "no details",
+      "grpcCode": 4,
+      "statusBase64": "CAQSGVRoZSBjYWxsIHJhbiBvdXQgb2YgdGltZS4=",
+      "expected": {
+        "source": "core",
+        "code": "DEADLINE_EXCEEDED",
+        "status": 4,
+        "retry": "retry_now",
+        "retryAfterSeconds": 0
+      }
+    },
+    {
+      "name": "instance queue full with retry info",
+      "grpcCode": 8,
+      "statusBase64": "CAgSIlRoZSBxdWV1ZSBvZiB0aGUgaW5zdGFuY2UgaXMgZnVsbC4aXQoodHlwZS5nb29nbGVhcGlzLmNvbS9nb29nbGUucnBjLkVycm9ySW5mbxIxCiBFUlJPUl9SRUFTT05fSU5TVEFOQ0VfUVVFVUVfRlVMTBINY2FseXguY29yZS52MRowCih0eXBlLmdvb2dsZWFwaXMuY29tL2dvb2dsZS5ycGMuUmV0cnlJbmZvEgQKAggM",
+      "expected": {
+        "source": "core",
+        "code": "ERROR_REASON_INSTANCE_QUEUE_FULL",
+        "status": 8,
+        "retry": "retry_later",
+        "retryAfterSeconds": 12
+      }
+    },
+    {
+      "name": "retry info with a fraction of a second",
+      "grpcCode": 8,
+      "statusBase64": "CAgSIlRoZSBxdWV1ZSBvZiB0aGUgaW5zdGFuY2UgaXMgZnVsbC4aXQoodHlwZS5nb29nbGVhcGlzLmNvbS9nb29nbGUucnBjLkVycm9ySW5mbxIxCiBFUlJPUl9SRUFTT05fSU5TVEFOQ0VfUVVFVUVfRlVMTBINY2FseXguY29yZS52MRo1Cih0eXBlLmdvb2dsZWFwaXMuY29tL2dvb2dsZS5ycGMuUmV0cnlJbmZvEgkKBwgBEICEr18=",
+      "expected": {
+        "source": "core",
+        "code": "ERROR_REASON_INSTANCE_QUEUE_FULL",
+        "status": 8,
+        "retry": "retry_later",
+        "retryAfterSeconds": 2
+      }
+    }
+  ]
+}

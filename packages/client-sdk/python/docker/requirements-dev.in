@@ -1,0 +1,14 @@
+# The development tools and the frameworks of the README examples. The lock file also has the
+# dependencies of both pyproject.toml files.
+celery
+django
+fastapi
+flask
+hatchling
+mypy
+pyright[nodejs]
+pytest
+ruff
+types-grpcio
+types-protobuf
+uv

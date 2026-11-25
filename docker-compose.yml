@@ -1,0 +1,198 @@
+# The services of Calyx. Before the first start, copy .env.example to .env and fill it in:
+# this file reads its values from .env.
+#
+# Always name the services in a command. Without names, compose starts every service of the
+# active profiles.
+#
+# The four installations. Fill in .env first: .env.example says which values each one needs.
+#
+# 1. Core alone
+#      docker compose --profile core up -d core
+# 2. Core with a webhook queue (Redis)
+#      docker compose --profile core --profile core-redis up -d core core-worker cache
+# 3. Everything, with a domain and HTTPS (production)
+#      docker compose --profile backend up -d --build traefik frontend postgres core backend
+# 4. Everything on one machine, with no domain (http://localhost:8080)
+#      docker compose --profile local up -d --build gateway frontend postgres core backend
+#
+# The test database of the backend is in docker-compose.dev.yml.
+#
+# The core and the backend check their values at start. A missing or wrong value stops them
+# with one line for each problem, so read the logs: docker compose logs core backend
+
+services:
+  # The core (apps/core): the WhatsApp numbers, the pacing and the webhooks. Every installation
+  # runs it. Its gRPC port is reachable only from the other containers of this file. Publish it
+  # with "ports" only behind your own network rules.
+  core:
+    profiles: ["core", "backend", "local"]
+    build:
+      context: .
+      dockerfile: ./apps/core/Dockerfile
+      target: production
+    restart: always
+    # The shutdown waits for the calls and the message in progress, then closes the sessions.
+    # Docker kills the process after 10 s by default, which can cut it.
+    stop_grace_period: 30s
+    volumes:
+      - core-data:/data # WhatsApp sessions and bulk jobs
+    environment:
+      - GRPC_PORT=50051
+      # The values come from .env (see .env.example).
+      - GRPC_AUTH_TOKEN=${CORE_TOKEN:-}
+      - META_WEBHOOK_PORT=${META_WEBHOOK_PORT:-}
+      - META_WEBHOOK_VERIFY_TOKEN=${CORE_META_VERIFY_TOKEN:-}
+      - REDIS_URL=${REDIS_URL:-}
+    labels:
+      # Read only by the traefik service of the "backend" profile: Meta's callbacks reach the core.
+      - traefik.enable=true
+      - traefik.http.routers.calyx-meta-webhook.rule=Host(`${CALYX_DOMAIN:-localhost}`) && Path(`/meta/webhook`)
+      - traefik.http.routers.calyx-meta-webhook.entrypoints=websecure
+      - traefik.http.routers.calyx-meta-webhook.priority=20
+      - traefik.http.routers.calyx-meta-webhook.tls.certresolver=le
+      - traefik.http.services.calyx-meta-webhook.loadbalancer.server.port=${META_WEBHOOK_PORT:-8081}
+
+  # Delivers the webhooks that the core puts in Redis. Only with REDIS_URL in .env (installation 2).
+  core-worker:
+    profiles: ["core-redis"]
+    build:
+      context: .
+      dockerfile: ./apps/core/Dockerfile
+      target: production
+    command: ["worker"]
+    restart: always
+    stop_grace_period: 30s # the webhooks in progress finish first
+    depends_on:
+      - core # the core creates and migrates the database first
+      - cache
+    volumes:
+      - core-data:/data # reads the URL and secret of each webhook
+    environment:
+      - REDIS_URL=redis://cache:6379
+
+  # The backend (apps/backend): users, organizations, API keys, alerts and the MCP server.
+  # Installations 3 and 4.
+  backend:
+    profiles: ["backend", "local"]
+    build:
+      context: .
+      dockerfile: ./apps/backend/Dockerfile
+      target: production
+    restart: always
+    # The shutdown ends the SSE streams and the pairing sessions first.
+    # Docker kills the process after 10 s by default, which can cut it.
+    stop_grace_period: 30s
+    depends_on:
+      postgres:
+        condition: service_healthy
+      core:
+        condition: service_started
+    # No "ports": only Traefik (profile "backend") or the gateway (profile "local") reaches the
+    # backend. TRUST_PROXY=true below depends on it: both proxies overwrite X-Forwarded-For.
+    environment:
+      # The values with ${...} come from .env (see .env.example).
+      - DATABASE_URL=postgres://calyx:${POSTGRES_PASSWORD:-}@postgres:5432/calyx
+      - HTTP_HOST=0.0.0.0
+      - HTTP_PORT=8080
+      - PUBLIC_URL=${PUBLIC_URL:-https://${CALYX_DOMAIN:-}}
+      - CORE_ADDRESS=core:50051
+      - CORE_TOKEN=${CORE_TOKEN:-}
+      - SECRET_KEY=${SECRET_KEY:-}
+      - CORE_META_VERIFY_TOKEN=${CORE_META_VERIFY_TOKEN:-}
+      - SMTP_HOST=${SMTP_HOST:-}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_USERNAME=${SMTP_USERNAME:-}
+      - SMTP_PASSWORD=${SMTP_PASSWORD:-}
+      - SMTP_FROM=${SMTP_FROM:-}
+      - OPERATOR_EMAIL=${OPERATOR_EMAIL:-}
+      - WHATSAPP_WEB_DEFAULT=${WHATSAPP_WEB_DEFAULT:-allowed}
+      - TRUST_PROXY=true
+      - MCP_ENABLED=${MCP_ENABLED:-true}
+      - LOG_FORMAT=json
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.calyx-backend.rule=Host(`${CALYX_DOMAIN:-localhost}`) && (PathPrefix(`/api/`) || PathPrefix(`/mcp`) || PathPrefix(`/healthz`) || Path(`/openapi.json`))
+      - traefik.http.routers.calyx-backend.entrypoints=websecure
+      - traefik.http.routers.calyx-backend.priority=10
+      - traefik.http.routers.calyx-backend.tls.certresolver=le
+      - traefik.http.services.calyx-backend.loadbalancer.server.port=8080
+
+  # The database of the backend. Never published.
+  postgres:
+    profiles: ["backend", "local"]
+    image: postgres:17-alpine
+    restart: always
+    environment:
+      - POSTGRES_USER=calyx
+      - POSTGRES_DB=calyx
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-}
+    volumes:
+      - backend-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U calyx -d calyx"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  # HTTPS in front of the backend and the panel (installation 3). It gets and renews the
+  # certificates from Let's Encrypt.
+  traefik:
+    profiles: ["backend"]
+    image: traefik:v3.6
+    restart: always
+    command:
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --entrypoints.web.address=:80
+      - --entrypoints.websecure.address=:443
+      - --entrypoints.web.http.redirections.entrypoint.to=websecure
+      - --entrypoints.web.http.redirections.entrypoint.scheme=https
+      - --certificatesresolvers.le.acme.email=${ACME_EMAIL:-}
+      - --certificatesresolvers.le.acme.storage=/letsencrypt/acme.json
+      - --certificatesresolvers.le.acme.httpchallenge.entrypoint=web
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - traefik-acme:/letsencrypt
+
+  # Redis for the optional webhook queue of the core (installation 2).
+  cache:
+    profiles: ["core-redis"]
+    image: redis:8.6.1-alpine
+    restart: always
+
+  # The panel (apps/frontend): static files, with no port of its own. Traefik (installation 3) or
+  # the gateway (installation 4) sends it every request that is not for the backend or the core.
+  frontend:
+    profiles: ["backend", "local"]
+    build:
+      context: .
+      dockerfile: ./apps/frontend/Dockerfile
+    restart: always
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.calyx-frontend.rule=Host(`${CALYX_DOMAIN:-localhost}`)
+      - traefik.http.routers.calyx-frontend.entrypoints=websecure
+      - traefik.http.routers.calyx-frontend.tls.certresolver=le
+      - traefik.http.routers.calyx-frontend.priority=1
+      - traefik.http.services.calyx-frontend.loadbalancer.server.port=8080
+
+  # The one address of installation 4: http://localhost:8080. It sends the backend paths to the
+  # backend and the rest to the panel.
+  # docker-compose.dev.yml uses the same port, so the two do not run together.
+  # Keep the image tag equal to the one in apps/frontend/Dockerfile.
+  gateway:
+    profiles: ["local"]
+    image: nginxinc/nginx-unprivileged:1.31.7-alpine
+    restart: always
+    ports:
+      - "127.0.0.1:8080:8080"
+    volumes:
+      - ./apps/frontend/gateway.conf:/etc/nginx/conf.d/default.conf:ro
+
+volumes:
+  core-data:
+  backend-postgres:
+  traefik-acme:

@@ -1,0 +1,71 @@
+{
+  "name": "@calyx/client-sdk",
+  "version": "0.1.0",
+  "description": "Typed TypeScript client for the Calyx backend and core APIs, with webhook checks.",
+  "author": "CSMarckitus <88045486+CSMarckitus@users.noreply.github.com>",
+  "license": "Apache-2.0",
+  "type": "module",
+  "private": true,
+  "sideEffects": false,
+  "engines": {
+    "node": ">=22.12"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "exports": {
+    "./core": {
+      "types": "./dist/core/index.d.ts",
+      "browser": "./dist/core/browser.js",
+      "default": "./dist/core/index.js"
+    },
+    "./backend": {
+      "types": "./dist/backend/index.d.ts",
+      "default": "./dist/backend/index.js"
+    },
+    "./webhooks": {
+      "types": "./dist/webhooks/index.d.ts",
+      "default": "./dist/webhooks/index.js"
+    },
+    "./errors": {
+      "types": "./dist/errors/index.d.ts",
+      "default": "./dist/errors/index.js"
+    }
+  },
+  "scripts": {
+    "generate": "tsx scripts/generate.ts",
+    "generate:check": "tsx scripts/generate.ts --check",
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.web.json",
+    "pretest": "pnpm run build",
+    "test": "node --import tsx --test \"test/**/*.test.ts\"",
+    "lint": "biome check .",
+    "format": "biome check --write .",
+    "prepack": "pnpm run build"
+  },
+  "peerDependencies": {
+    "@bufbuild/protobuf": "^2.11.0",
+    "@grpc/grpc-js": "^1.14.3"
+  },
+  "peerDependenciesMeta": {
+    "@bufbuild/protobuf": {
+      "optional": true
+    },
+    "@grpc/grpc-js": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.6.6",
+    "@bufbuild/protobuf": "^2.11.0",
+    "@grpc/grpc-js": "^1.14.3",
+    "@types/node": "^25.5.0",
+    "esbuild": "^0.27.4",
+    "openapi-typescript": "^7.13.0",
+    "ts-proto": "^2.11.5",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  }
+}

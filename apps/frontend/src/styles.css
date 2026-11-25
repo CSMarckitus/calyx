@@ -1,0 +1,213 @@
+@import "tailwindcss";
+@import "@fontsource/ibm-plex-sans/latin-500.css";
+@import "@fontsource/ibm-plex-sans/latin-600.css";
+@import "@fontsource/ibm-plex-sans/latin-700.css";
+@import "@fontsource/ibm-plex-sans/latin-ext-500.css";
+@import "@fontsource/ibm-plex-sans/latin-ext-600.css";
+@import "@fontsource/ibm-plex-sans/latin-ext-700.css";
+@import "@fontsource/source-sans-3/latin-400.css";
+@import "@fontsource/source-sans-3/latin-600.css";
+@import "@fontsource/source-sans-3/latin-ext-400.css";
+@import "@fontsource/source-sans-3/latin-ext-600.css";
+@import "@fontsource/ibm-plex-mono/latin-600.css";
+@import "@fontsource/ibm-plex-mono/latin-ext-600.css";
+
+:root {
+  --bg: #f3f6fa;
+  --surface: #ffffff;
+  --sunken: #eaeff6;
+  --line: #d5dde9;
+  --ink: #14223a;
+  --muted: #54627a;
+  --brand: #2659ac;
+  --brand-ink: #ffffff;
+  --brand-soft: #e6eef9;
+  --ok: #1b7448;
+  --ok-soft: #e1f2e9;
+  --wait: #8a5a00;
+  --wait-soft: #fbf0d9;
+  --bad: #ae2a22;
+  --bad-soft: #fbe7e5;
+  --idle: #5d6a80;
+  --idle-soft: #e9edf3;
+  --logo-a: #1d4a97;
+  --logo-b: #2c61b7;
+  --display: "IBM Plex Sans", "Segoe UI", sans-serif;
+  --text: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+
+/* The theme of the system, until the person selects one (theme.js sets data-theme). */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1521;
+    --surface: #151f2f;
+    --sunken: #1b2739;
+    --line: #2a394f;
+    --ink: #e7edf7;
+    --muted: #9babc3;
+    --brand: #7fa9ee;
+    --brand-ink: #0b1626;
+    --brand-soft: #1b2e4d;
+    --ok: #6ccb9b;
+    --ok-soft: #14332a;
+    --wait: #e5b662;
+    --wait-soft: #362b15;
+    --bad: #f08c84;
+    --bad-soft: #3a1e1f;
+    --idle: #9babc3;
+    --idle-soft: #223046;
+    --logo-a: #5685d6;
+    --logo-b: #7fa9ee;
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg: #0e1521;
+  --surface: #151f2f;
+  --sunken: #1b2739;
+  --line: #2a394f;
+  --ink: #e7edf7;
+  --muted: #9babc3;
+  --brand: #7fa9ee;
+  --brand-ink: #0b1626;
+  --brand-soft: #1b2e4d;
+  --ok: #6ccb9b;
+  --ok-soft: #14332a;
+  --wait: #e5b662;
+  --wait-soft: #362b15;
+  --bad: #f08c84;
+  --bad-soft: #3a1e1f;
+  --idle: #9babc3;
+  --idle-soft: #223046;
+  --logo-a: #5685d6;
+  --logo-b: #7fa9ee;
+  color-scheme: dark;
+}
+
+@custom-variant dark {
+  @media (prefers-color-scheme: dark) {
+    &:where(:root:not([data-theme="light"]) *) {
+      @slot;
+    }
+  }
+  &:where([data-theme="dark"], [data-theme="dark"] *) {
+    @slot;
+  }
+}
+
+/* The names that the shadcn components use, mapped to the tokens above. */
+@theme inline {
+  --color-background: var(--bg);
+  --color-foreground: var(--ink);
+  --color-card: var(--surface);
+  --color-card-foreground: var(--ink);
+  --color-popover: var(--surface);
+  --color-popover-foreground: var(--ink);
+  --color-primary: var(--brand);
+  --color-primary-foreground: var(--brand-ink);
+  --color-secondary: var(--sunken);
+  --color-secondary-foreground: var(--ink);
+  --color-muted: var(--sunken);
+  --color-muted-foreground: var(--muted);
+  --color-accent: var(--brand-soft);
+  --color-accent-foreground: var(--ink);
+  --color-destructive: var(--bad);
+  --color-border: var(--line);
+  --color-input: var(--line);
+  --color-ring: var(--brand);
+  --color-ok: var(--ok);
+  --color-ok-soft: var(--ok-soft);
+  --color-wait: var(--wait);
+  --color-wait-soft: var(--wait-soft);
+  --color-bad: var(--bad);
+  --color-bad-soft: var(--bad-soft);
+  --color-idle: var(--idle);
+  --color-idle-soft: var(--idle-soft);
+  --font-sans: var(--text);
+  --font-display: var(--display);
+  --font-mono: var(--mono);
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 10px;
+}
+
+@layer base {
+  * {
+    box-sizing: border-box;
+    border-color: var(--line);
+  }
+  html {
+    background: var(--bg);
+  }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font: 400 16px / 1.5 var(--text);
+    /* The fonts join "ft", "fi" and "fl" in one glyph that looks bold. */
+    font-variant-ligatures: no-common-ligatures;
+  }
+  h1,
+  h2,
+  h3 {
+    font-family: var(--display);
+    line-height: 1.2;
+    margin: 0;
+    text-wrap: balance;
+    letter-spacing: -0.01em;
+  }
+  h1 {
+    font-size: 1.75rem;
+    font-weight: 700;
+  }
+  h2 {
+    font-size: 1.125rem;
+    font-weight: 700;
+  }
+  h3 {
+    font-size: 1rem;
+    font-weight: 600;
+  }
+  code,
+  kbd {
+    font-family: var(--mono);
+    font-weight: 600;
+  }
+  :focus-visible {
+    outline: 3px solid var(--brand);
+    outline-offset: 2px;
+  }
+}
+
+/* Reduced motion removes the fold, the pulse and the slide. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    /* biome-ignore lint/complexity/noImportantStyles: it must win over the classes of the components */
+    animation: none !important;
+    /* biome-ignore lint/complexity/noImportantStyles: same reason */
+    transition: none !important;
+  }
+}
+
+/* A short fade for popups. Plain CSS, because tw-animate-css is not a dependency. */
+@keyframes calyx-in {
+  from {
+    opacity: 0;
+  }
+}
+[data-slot$="-content"][data-open] {
+  animation: calyx-in 0.1s ease-out;
+}
+
+/* Base UI would inject this rule in a <style> element, which the CSP blocks (CSPProvider turns it off). */
+[data-slot="select-content"] {
+  scrollbar-width: none;
+}
+[data-slot="select-content"]::-webkit-scrollbar {
+  display: none;
+}

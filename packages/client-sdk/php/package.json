@@ -1,0 +1,15 @@
+{
+  "name": "@calyx/client-sdk-php",
+  "private": true,
+  "license": "Apache-2.0",
+  "description": "PHP client for the Calyx backend and core APIs, with webhook checks.",
+  "scripts": {
+    "test": "docker/run.sh test-client && docker/run.sh test-core && cd fakecore && GOPRIVATE='github.com/csmarckitus/*' go test -race ./...",
+    "vet": "cd fakecore && GOPRIVATE='github.com/csmarckitus/*' go vet ./...",
+    "lint": "docker/run.sh lint-client && docker/run.sh lint-core && cd fakecore && GOPRIVATE='github.com/csmarckitus/*' go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.15.0 run --config ../../../../.golangci.yml ./...",
+    "generate": "cd ../tools && go run ./cmd/phpgen && cd ../php && docker/run.sh protoc",
+    "generate:check": "cd ../tools && go run ./cmd/phpgen -check && cd ../php && docker/run.sh protoc-check",
+    "deps:check": "docker/deps-check.sh",
+    "composer": "docker/run.sh composer"
+  }
+}

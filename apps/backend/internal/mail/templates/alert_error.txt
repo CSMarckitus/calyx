@@ -1,0 +1,18 @@
+Subject: [Calyx] {{.InstanceName}} stopped with an error
+
+Hello,
+
+The instance "{{.InstanceName}}" of the client "{{.ClientName}}" ({{.OrganizationName}}) has the status {{.Status}} since {{.Since.UTC.Format "2006-01-02 15:04 UTC"}}. Its session cannot continue.
+
+Possible causes: WhatsApp banned the number for a period, another device replaced the session, or the client version of the core is outdated.
+
+It is not possible to pair an instance in this status again.
+
+Open {{.Link}} in Calyx. Then remove the instance, and create it again. This does not remove a ban: if WhatsApp banned the number, the new instance can be banned too.
+
+With the API: DELETE {{.APILink}}
+
+You receive this mail once for this problem.
+
+-- 
+Calyx at {{.PublicURL}}

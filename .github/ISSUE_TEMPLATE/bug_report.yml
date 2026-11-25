@@ -1,0 +1,83 @@
+name: Bug report
+description: Something in Calyx does not work as the documentation says.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report. Before you send it, remove every secret, token, password and phone
+        number from the text and the logs. For a security problem, do not use this form: use
+        "Report a vulnerability" instead.
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      options:
+        - Core
+        - Backend
+        - Panel (frontend)
+        - Client SDK - TypeScript
+        - Client SDK - Go
+        - Client SDK - PHP
+        - Client SDK - Python
+        - Client SDK - VB6
+        - Documentation
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: The panel shows it in the health card. Without the panel, read "version" in /healthz.
+      placeholder: 0.1.0
+    validations:
+      required: true
+  - type: dropdown
+    id: installation
+    attributes:
+      label: Installation
+      options:
+        - 1. Core alone
+        - 2. Core with a webhook queue (Redis)
+        - 3. Everything, with a domain and HTTPS
+        - 4. Everything on one machine, with no domain
+        - From the source (development)
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Start ...
+        2. Send ...
+        3. See ...
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: For example the output of "docker compose logs core backend". Remove secrets and phone numbers first.
+      render: shell
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: I searched the open issues, and this problem is not there.
+          required: true
+        - label: The text and the logs contain no secret, token, password or phone number.
+          required: true

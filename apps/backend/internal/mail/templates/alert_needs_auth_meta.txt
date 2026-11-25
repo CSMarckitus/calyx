@@ -1,0 +1,18 @@
+Subject: [Calyx] {{.InstanceName}} needs new Meta credentials
+
+Hello,
+
+The Meta Cloud instance "{{.InstanceName}}" of the client "{{.ClientName}}" ({{.OrganizationName}}) cannot authenticate with Meta. Its status is {{.Status}} since {{.Since.UTC.Format "2006-01-02 15:04 UTC"}}.
+
+Usual cause: the access token expired or was revoked in the Meta app.
+
+The instance cannot send messages until it has valid credentials. To fix it:
+
+Open {{.Link}} in Calyx. Then create a new access token in your Meta app, and send it with the API.
+
+With the API: send PATCH {{.APILink}} with {"meta_credentials":{"phone_number_id":"...","access_token":"...","app_secret":"..."}}
+
+You receive this mail once for this problem.
+
+-- 
+Calyx at {{.PublicURL}}

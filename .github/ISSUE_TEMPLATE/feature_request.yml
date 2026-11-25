@@ -1,0 +1,35 @@
+name: Feature proposal
+description: Propose a change or a new feature. Agree on it here before you write the code.
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Calyx stays small on purpose. Read "What fits in Calyx" in CONTRIBUTING.md first.
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: What do you need to do, and why can you not do it now?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Your proposal
+      description: How would Calyx solve it? Name the component (core, backend, panel or an SDK).
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Other ways you considered
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: I read "What fits in Calyx" in CONTRIBUTING.md.
+          required: true
+        - label: The proposal does not remove, lower or make optional the guardrails, and it does not help bulk unsolicited messaging.
+          required: true

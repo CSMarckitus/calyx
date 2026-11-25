@@ -1,0 +1,129 @@
+{
+  "cases": [
+    {
+      "name": "CRLF line ends",
+      "chunks": [
+        "event: update\r\ndata: {\"message\":\"scan\",\"pairing_code\":null,\r\ndata: \"qr_text\":\"QR1\",\"status\":\"NEEDS_AUTH\"}\r\n\r\n",
+        "event: done\r\ndata: {\"status\":\"CONNECTED\"}\r\n\r\n"
+      ],
+      "expected": {
+        "items": [
+          {"event": "update", "data": {"message": "scan", "pairing_code": null, "qr_text": "QR1", "status": "NEEDS_AUTH"}},
+          {"event": "done", "data": {"status": "CONNECTED"}}
+        ],
+        "error": null
+      }
+    },
+    {
+      "name": "CR at the end of a chunk, then the LF in the next chunk",
+      "chunks": [
+        "event: update\rdata: {\"status\":\"CONNECTING\"}\r",
+        "",
+        "\n",
+        "\r\n",
+        "event: done\ndata: {\"status\":\"CONNECTED\"}\n\n"
+      ],
+      "expected": {
+        "items": [
+          {"event": "update", "data": {"status": "CONNECTING"}},
+          {"event": "done", "data": {"status": "CONNECTED"}}
+        ],
+        "error": null
+      }
+    },
+    {
+      "name": "ping frames give no item",
+      "chunks": [
+        ": ping\n\n",
+        "event: update\ndata: {\"status\":\"CONNECTING\"}\n\n",
+        ": ping\n\n",
+        "event: done\ndata: {\"status\":\"CONNECTED\"}\n\n"
+      ],
+      "expected": {
+        "items": [
+          {"event": "update", "data": {"status": "CONNECTING"}},
+          {"event": "done", "data": {"status": "CONNECTED"}}
+        ],
+        "error": null
+      }
+    },
+    {
+      "name": "comments give no item, even without an empty line after them",
+      "chunks": [
+        ": hello\n",
+        ": other\n\n",
+        "event: update\ndata: {\"status\":\"CONNECTING\"}\n\n",
+        "event: done\ndata: {\"status\":\"CONNECTED\"}\n\n"
+      ],
+      "expected": {
+        "items": [
+          {"event": "update", "data": {"status": "CONNECTING"}},
+          {"event": "done", "data": {"status": "CONNECTED"}}
+        ],
+        "error": null
+      }
+    },
+    {
+      "name": "data on more than one line, and a field without a space after the colon",
+      "chunks": [
+        "event:update\ndata:{\"message\":\"m\",\"pairing_code\":null,\ndata:\"qr_text\":null,\"status\":\"CONNECTING\"}\n\n",
+        "event: done\ndata: {\"status\":\"CONNECTED\"}\n\n"
+      ],
+      "expected": {
+        "items": [
+          {"event": "update", "data": {"message": "m", "pairing_code": null, "qr_text": null, "status": "CONNECTING"}},
+          {"event": "done", "data": {"status": "CONNECTED"}}
+        ],
+        "error": null
+      }
+    },
+    {
+      "name": "a done item ends the stream",
+      "chunks": [
+        "event: update\ndata: {\"status\":\"NEEDS_AUTH\"}\n\n",
+        "event: done\ndata: {\"status\":\"CONNECTED\"}\n\n"
+      ],
+      "expected": {
+        "items": [
+          {"event": "update", "data": {"status": "NEEDS_AUTH"}},
+          {"event": "done", "data": {"status": "CONNECTED"}}
+        ],
+        "error": null
+      }
+    },
+    {
+      "name": "a failed item as the first item ends the stream",
+      "chunks": [
+        "event: failed\ndata: {\"code\":\"pairing_expired\",\"detail\":\"The codes ended.\"}\n\n"
+      ],
+      "expected": {
+        "items": [
+          {"event": "failed", "data": {"code": "pairing_expired", "detail": "The codes ended."}}
+        ],
+        "error": null
+      }
+    },
+    {
+      "name": "the stream ends before done",
+      "chunks": [
+        "event: update\ndata: {\"status\":\"NEEDS_AUTH\"}\n\n"
+      ],
+      "expected": {
+        "items": [
+          {"event": "update", "data": {"status": "NEEDS_AUTH"}}
+        ],
+        "error": "stream_failed"
+      }
+    },
+    {
+      "name": "data that is not JSON",
+      "chunks": [
+        "event: update\ndata: nope\n\n"
+      ],
+      "expected": {
+        "items": [],
+        "error": "invalid_response"
+      }
+    }
+  ]
+}

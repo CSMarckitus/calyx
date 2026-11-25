@@ -1,0 +1,8 @@
+Type=Exe
+Module=ProbeMain; ProbeMain.bas
+Class=ProbeEvents; ProbeEvents.cls
+Module=CalyxJson; ..\..\src\CalyxJson.bas
+Startup="Sub Main"
+Name="Probe"
+ExeName32="Probe.exe"
+Title="Probe"

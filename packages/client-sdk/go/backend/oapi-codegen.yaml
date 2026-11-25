@@ -1,0 +1,9 @@
+package: backend
+generate:
+  models: true
+compatibility:
+  always-prefix-enum-values: true
+output: types_gen.go
+output-options:
+  overlay:
+    path: overlay.yaml

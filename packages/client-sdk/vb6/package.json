@@ -1,0 +1,16 @@
+{
+  "name": "@calyx/client-sdk-vb6",
+  "private": true,
+  "license": "Apache-2.0",
+  "description": "Client for the Calyx backend for Visual Basic 6, with its build tools.",
+  "scripts": {
+    "test": "cd tools && go test -race ./...",
+    "vet": "cd tools && go vet ./...",
+    "lint": "cd tools && go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.15.0 run --config ../../../../.golangci.yml ./...",
+    "generate": "cd tools && go run ./cmd/vb6gen",
+    "generate:check": "cd tools && go run ./cmd/vb6gen -check",
+    "check": "cd tools && go run ./cmd/vb6lint ../src ../tests ../examples",
+    "fake": "cd tools && go run ./cmd/fakebackend -addr 127.0.0.1:8080",
+    "fake:windows": "cd tools && GOOS=windows GOARCH=386 go build -o ../tests/fakebackend.exe ./cmd/fakebackend"
+  }
+}

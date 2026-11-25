@@ -1,0 +1,18 @@
+{
+  "name": "@calyx/shared-types",
+  "version": "0.1.0",
+  "description": "Proto files of the Calyx core API, their generated Go module, and the OpenAPI document of the backend.",
+  "license": "Apache-2.0",
+  "author": "CSMarckitus <88045486+CSMarckitus@users.noreply.github.com>",
+  "type": "module",
+  "private": true,
+  "exports": {
+    "./proto/*": "./proto/*",
+    "./openapi/*": "./openapi/*"
+  },
+  "scripts": {
+    "test": "cd go && go test -race ./...",
+    "proto:generate:go": "protoc --go_out=./go --go_opt=module=github.com/csmarckitus/calyx/packages/shared-types/go --go-grpc_out=./go --go-grpc_opt=module=github.com/csmarckitus/calyx/packages/shared-types/go --proto_path=./proto ./proto/calyx/core/v1/event.proto ./proto/calyx/core/v1/instance.proto ./proto/calyx/core/v1/message.proto",
+    "proto:check:go": "d=$(mktemp -d) && protoc --go_out=\"$d\" --go_opt=module=github.com/csmarckitus/calyx/packages/shared-types/go --go-grpc_out=\"$d\" --go-grpc_opt=module=github.com/csmarckitus/calyx/packages/shared-types/go --proto_path=./proto ./proto/calyx/core/v1/event.proto ./proto/calyx/core/v1/instance.proto ./proto/calyx/core/v1/message.proto && diff -r \"$d/corev1\" go/corev1; s=$?; rm -rf \"$d\"; exit $s"
+  }
+}

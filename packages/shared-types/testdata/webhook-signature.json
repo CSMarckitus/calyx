@@ -1,0 +1,17 @@
+{
+  "body": "{\"id\":\"evt_0001\",\"event\":\"message.received\",\"instance\":\"i_0123456789abcdef0123456789abcdef\",\"data\":{\"messageId\":\"3EB0A1B2C3D4E5F60718\",\"chatId\":\"34600000000@s.whatsapp.net\",\"from\":\"34600000000@s.whatsapp.net\",\"isGroup\":false,\"pushName\":\"Ana Example\",\"timestamp\":1790000000,\"type\":\"text\",\"text\":\"Hello, this is a test\"},\"timestamp\":\"2026-11-20T10:00:00.123Z\"}",
+  "event": {
+    "id": "evt_0001",
+    "instanceName": "i_0123456789abcdef0123456789abcdef",
+    "type": "message.received",
+    "payloadJson": "{\"messageId\":\"3EB0A1B2C3D4E5F60718\",\"chatId\":\"34600000000@s.whatsapp.net\",\"from\":\"34600000000@s.whatsapp.net\",\"isGroup\":false,\"pushName\":\"Ana Example\",\"timestamp\":1790000000,\"type\":\"text\",\"text\":\"Hello, this is a test\"}",
+    "occurredAt": "2026-11-20T10:00:00.123Z"
+  },
+  "headers": {
+    "Content-Type": "application/json",
+    "X-Calyx-Signature": "sha256=b1832c72c53dccd9de9d6653a64dc799feb403d278dacbc039a94972309a397e",
+    "X-Calyx-Timestamp": "1790000005"
+  },
+  "now": 1790000005,
+  "secret": "test-secret-not-real"
+}

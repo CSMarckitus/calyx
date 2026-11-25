@@ -1,0 +1,16 @@
+Subject: You are invited to manage {{.ClientName}} on Calyx
+
+Hello,
+
+{{.OrganizationName}} invites you to manage the WhatsApp instances of "{{.ClientName}}" on Calyx ({{.PublicURL}}).
+
+To accept the invitation and set your password, open this link:
+
+{{.Link}}
+
+The link is valid for 7 days and works once.
+
+If you did not expect this invitation, ignore this mail.
+
+-- 
+Calyx at {{.PublicURL}}

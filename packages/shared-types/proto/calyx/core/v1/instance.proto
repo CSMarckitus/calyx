@@ -1,0 +1,264 @@
+syntax = "proto3";
+
+package calyx.core.v1;
+
+option go_package = "github.com/csmarckitus/calyx/packages/shared-types/go/corev1;corev1";
+
+// Lifecycle of WhatsApp instances (one instance = one WhatsApp account / phone number).
+// Failures are reported with standard gRPC status codes (INVALID_ARGUMENT, NOT_FOUND,
+// ALREADY_EXISTS, FAILED_PRECONDITION, ...), never inside the response messages.
+service InstanceService {
+  // Creates an instance. For WhatsApp Web the stream stays open during pairing: it sends every new
+  // QR / pairing code and finishes with a CONNECTED update. Calling it again for an instance
+  // that is in NEEDS_AUTH starts a new pairing (a re-pair). A re-pair keeps what it does not carry:
+  // - No webhooks in the request: the stored webhooks stay, with their secrets.
+  // - Webhooks in the request: they replace the stored list.
+  // - No is_used_only_for_send_messages: the stored flag stays. A value sets it.
+  // - The core checks the merged configuration (stored values plus the request).
+  // - The configuration is written before the pairing. A failed or cancelled re-pair keeps it, and
+  //   the instance stays in NEEDS_AUTH.
+  // To remove all webhooks, call UpdateInstanceConfig with an empty WebhookList.
+  rpc CreateInstance (CreateInstanceRequest) returns (stream CreateInstanceResponse);
+  // Removes an instance with its webhooks and bulk jobs, and unlinks the device of a WHATSAPP_WEB
+  // instance when it can. An instance that is being paired gives FAILED_PRECONDITION.
+  rpc RemoveInstance (RemoveInstanceRequest) returns (RemoveInstanceResponse);
+  // Changes the configuration of an instance. Any field except webhooks restarts the instance when
+  // it is present, and a direct message that waits gets UNAVAILABLE.
+  rpc UpdateInstanceConfig (UpdateInstanceConfigRequest) returns (UpdateInstanceConfigResponse);
+  // Returns every instance, oldest first. It never opens a connection to WhatsApp.
+  rpc ListInstances (ListInstancesRequest) returns (ListInstancesResponse);
+  // Returns the last known status. It never opens a connection to WhatsApp.
+  rpc GetInstanceStatus (GetInstanceStatusRequest) returns (GetInstanceStatusResponse);
+}
+
+// The connection status of an instance.
+enum InstanceStatus {
+  // No value. Calyx never gives it.
+  INSTANCE_STATUS_UNSPECIFIED = 0;
+  // The instance is connected. An instance used only for sending keeps this status when it closes
+  // its idle connection.
+  INSTANCE_STATUS_CONNECTED = 1;
+  // The instance opens its connection (WHATSAPP_WEB), or checks its credentials (META_CLOUD).
+  INSTANCE_STATUS_CONNECTING = 2;
+  // The instance is not authenticated: WHATSAPP_WEB needs a pairing, and META_CLOUD needs new
+  // credentials.
+  INSTANCE_STATUS_NEEDS_AUTH = 3;
+  // The instance is not connected, for example because it is disabled or because the network
+  // failed.
+  INSTANCE_STATUS_DISCONNECTED = 4;
+  // WHATSAPP_WEB only: another client took the session, the account has a temporary ban, or
+  // WhatsApp says that Calyx is too old. An instance with this status cannot be paired again.
+  INSTANCE_STATUS_ERROR = 5;
+}
+
+// How an instance connects to WhatsApp.
+enum Provider {
+  // No value. Calyx never gives it.
+  PROVIDER_UNSPECIFIED = 0;
+  // Unofficial WhatsApp Web protocol (personal accounts).
+  PROVIDER_WHATSAPP_WEB = 1;
+  // Official WhatsApp Business Cloud API hosted by Meta.
+  PROVIDER_META_CLOUD = 2;
+}
+
+// The browser and the operating system that a WhatsApp Web instance shows on the phone, in its list
+// of linked devices. It changes only this label, not the risk of a ban: WhatsApp still sees the
+// same IP address, app version and protocol for every instance of one core.
+enum DeviceIdentity {
+  // The core picks one entry at random.
+  DEVICE_IDENTITY_UNSPECIFIED = 0;
+  DEVICE_IDENTITY_CHROME_WINDOWS = 1;   // "Chrome (Windows)"
+  DEVICE_IDENTITY_EDGE_WINDOWS = 2;     // "Edge (Windows)"
+  DEVICE_IDENTITY_FIREFOX_WINDOWS = 3;  // "Firefox (Windows)"
+  DEVICE_IDENTITY_FIREFOX_LINUX = 4;    // "Firefox (Linux)"
+  DEVICE_IDENTITY_SAFARI_MAC_OS = 5;    // "Safari (Mac OS)"
+}
+
+// A webhook: the URL that gets one type of event.
+message WebhookConfig {
+  // The URL that gets each event in a POST request. It starts with http:// or https:// and has a
+  // host.
+  string url = 1;
+  // A Calyx event ("message.received", "message.status", "connection.update", "bulk.finished")
+  // or a raw provider event ("whatsmeow.<EventType>", for example "whatsmeow.Receipt", or "meta.webhook").
+  string event = 2;
+  // When set, every delivery is signed: see the X-Calyx-Signature header.
+  optional string secret = 3;
+}
+
+// A pairing with a code that a person types on the phone.
+message PairingCodeSettings {
+  // Digits only, with country code. Example: 34600111222
+  string phone_number = 1;
+}
+
+// The settings of a WHATSAPP_WEB instance.
+message WhatsAppWebSettings {
+  // Was socket_options_json (Baileys socket options); whatsmeow has no equivalent.
+  reserved 1;
+  reserved "socket_options_json";
+
+  oneof pairing_method {
+    // True pairs with a QR code, the default. False gives INVALID_ARGUMENT.
+    bool pairing_qr = 2;
+    // Pairs with a code that a person types on the phone. Absent means a QR code.
+    PairingCodeSettings pairing_code = 3;
+  }
+
+  // The label of the linked device. Unspecified: the core picks one at random, also at each
+  // re-pair, because a re-pair links a new device. It does not change the risk of a ban.
+  DeviceIdentity device_identity = 4;
+  // "language-COUNTRY", for example "es-ES": two lower-case letters, a hyphen, two upper-case
+  // letters. The instance sends it to WhatsApp at the pairing and at every later connection.
+  // Required for a new pairing. A re-pair without it keeps the stored locale. The core does not
+  // check that the codes exist. It does not change the risk of a ban.
+  optional string locale = 5;
+}
+
+// The credentials of a META_CLOUD instance, from the Meta app. All three are required.
+message MetaCloudSettings {
+  // The phone number id that Meta gave. Two instances cannot have the same one.
+  string phone_number_id = 1;
+  // The access token for the Meta Cloud API.
+  string access_token = 2;
+  // App secret used to verify the signature of the webhooks Meta sends to the core.
+  string app_secret = 3;
+}
+
+// A new instance, or an instance in NEEDS_AUTH to authenticate again: WHATSAPP_WEB pairs again, and
+// META_CLOUD gets new credentials.
+message CreateInstanceRequest {
+  // The name of the instance in Calyx, unique and not empty. WhatsApp does not see it.
+  string instance_name = 1;
+  // WhatsApp Web only: the socket is opened just to send and closed again when idle.
+  // Absent: false for a new instance, the stored value for a re-pair.
+  optional bool is_used_only_for_send_messages = 2;
+  // The webhooks, at most one per event, and none for an instance used only for sending. Empty
+  // keeps the stored webhooks of a re-pair.
+  repeated WebhookConfig webhooks = 3;
+
+  // Absent means WhatsApp Web with QR pairing and no locale. The core refuses a new instance
+  // without a locale, so only a re-pair of a WhatsApp Web instance can omit it.
+  oneof provider_settings {
+    // The settings of a WHATSAPP_WEB instance (unofficial, paired with a phone).
+    WhatsAppWebSettings whatsapp_web = 10;
+    // The credentials of a META_CLOUD instance (the official Meta Cloud API).
+    MetaCloudSettings meta_cloud = 11;
+  }
+}
+
+// One update of a pairing; META_CLOUD gives only one. In a QR pairing, use the newest update,
+// because the QR code changes.
+message CreateInstanceResponse {
+  // NEEDS_AUTH: use pairing_code to pair. CONNECTED means that the instance is connected, and it is
+  // the last update.
+  InstanceStatus status = 1;
+  // NEEDS_AUTH only: the text to encode in a QR code (the client draws the image), or the
+  // pairing code: 9 characters with a hyphen, for example "ABCD-2345".
+  optional string pairing_code = 2;
+  // A sentence for people that describes the update.
+  string message = 3;
+  // Set only on the last update (CONNECTED) of a WhatsApp Web pairing: the device identity that
+  // the core used (requested or random) and the locale of the instance.
+  DeviceIdentity device_identity = 4;
+  // The locale of the instance, for example "es-ES". Set only on the last update of a
+  // WHATSAPP_WEB pairing.
+  optional string locale = 5;
+}
+
+// Selects the instance to remove.
+message RemoveInstanceRequest {
+  // The name of the instance.
+  string instance_name = 1;
+}
+
+// Empty: the instance is removed.
+message RemoveInstanceResponse {}
+
+// A list of webhooks.
+message WebhookList {
+  // The webhooks, at most one per event. Empty removes all webhooks of the instance.
+  repeated WebhookConfig webhooks = 1;
+}
+
+// Only the fields that are present are changed.
+message UpdateInstanceConfigRequest {
+  // The name that the instance has now.
+  string instance_name = 1;
+  // The new name of the instance, unique and not empty. Absent keeps the name.
+  optional string new_instance_name = 2;
+  // A disabled instance is disconnected and cannot be used until it is enabled again.
+  optional bool is_enabled = 3;
+  // WHATSAPP_WEB only: true connects only to send, and true needs an instance with no webhooks.
+  // Absent keeps the stored value.
+  optional bool is_used_only_for_send_messages = 4;
+  // Was socket_options_json (Baileys socket options); whatsmeow has no equivalent.
+  reserved 5;
+  reserved "socket_options_json";
+  // Replaces the whole list of webhooks of the instance.
+  optional WebhookList webhooks = 6;
+  // Meta Cloud only: replaces the credentials (for example after rotating the token).
+  optional MetaCloudSettings meta_cloud = 7;
+}
+
+// Empty: the changes are stored.
+message UpdateInstanceConfigResponse {}
+
+// Empty: the answer has every instance.
+message ListInstancesRequest {}
+
+// The instances that Calyx manages.
+message ListInstancesResponse {
+  // The instances, oldest first. Empty when there are none.
+  repeated InstanceInfo instances = 1;
+}
+
+// One WhatsApp number that Calyx manages.
+message InstanceInfo {
+  // The name of the instance in Calyx. WhatsApp does not see it.
+  string instance_name = 1;
+  // WHATSAPP_WEB (unofficial, paired with a phone) or META_CLOUD (the official Meta Cloud API).
+  Provider provider = 2;
+  // The last known connection status.
+  InstanceStatus connection_status = 3;
+  // False for a disabled instance: it does not connect and cannot send.
+  bool is_enabled = 4;
+  // True for a WHATSAPP_WEB instance that connects only to send. It receives no messages and has no
+  // webhooks.
+  bool is_used_only_for_send_messages = 5;
+  // Was socket_options_json (Baileys socket options); whatsmeow has no equivalent.
+  reserved 6;
+  reserved "socket_options_json";
+  // The webhooks of the instance, at most one per event. Empty when there are none.
+  repeated WebhookSettings webhooks = 7;
+  // WhatsApp Web only. UNSPECIFIED and no locale: a Meta Cloud instance, or a WhatsApp Web
+  // instance paired before the core stored these values.
+  DeviceIdentity device_identity = 8;
+  // The language and the country that WhatsApp gets, for example "es-ES". Absent for META_CLOUD, or
+  // when none is stored.
+  optional string locale = 9;
+}
+
+// A webhook of an instance, without its secret.
+message WebhookSettings {
+  // The URL that gets each event in a POST request.
+  string url = 1;
+  // The event of the webhook. It has the same values as WebhookConfig.event.
+  string event = 2;
+  // False for a webhook that gets no events. A new webhook has true.
+  bool is_active = 3;
+  // Secrets are never returned, only whether one is configured.
+  bool has_secret = 4;
+}
+
+// Selects the instance of GetInstanceStatus.
+message GetInstanceStatusRequest {
+  // The name of the instance.
+  string instance_name = 1;
+}
+
+// The connection status of one instance.
+message GetInstanceStatusResponse {
+  // The last known connection status.
+  InstanceStatus status = 1;
+}

@@ -1,0 +1,13 @@
+{
+  "name": "@calyx/core",
+  "private": true,
+  "license": "AGPL-3.0-only",
+  "scripts": {
+    "dev": "go run ./cmd/core",
+    "worker:dev": "go run ./cmd/worker",
+    "build": "go build -o dist/ ./cmd/...",
+    "test": "go test -race ./...",
+    "vet": "go vet ./...",
+    "lint": "go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.15.0 run --config ../../.golangci.yml ./..."
+  }
+}

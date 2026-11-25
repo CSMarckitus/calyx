@@ -1,0 +1,26 @@
+; The settings of the Calyx examples for VB6. This file has no real value.
+;
+; 1. Copy this file to calyx-example.ini in the folder of the example (next to its EXE).
+; 2. Fill in BaseUrl, ApiKey and InstanceId.
+;
+; Git ignores calyx-example.ini, because it holds a real API key. Never commit it.
+; Caution: test against the fake backend or with your own test number. A message to a real
+; number can get that number banned.
+
+[Calyx]
+; https:// only. http:// is allowed for localhost and 127.0.0.1 (the fake backend).
+BaseUrl=
+; Use the key of a client user that can use only its own instances.
+ApiKey=
+; The ID of a paired instance, from the frontend.
+InstanceId=
+
+; Only ScheduledSend reads this section: the reminders of the day.
+; Count is the number of reminders. Reminder 1 has Recipient1 and Text1, and so on.
+[Reminders]
+Count=0
+; Recipient1=
+; Text1=
+
+; FirstMessage writes the section [LastSend]: the idempotency key of its last send and the
+; time it made the key.

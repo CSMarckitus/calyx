@@ -1,0 +1,11 @@
+go 1.27
+
+use (
+	./apps/backend
+	./apps/core
+	./packages/client-sdk/go
+	./packages/client-sdk/php/fakecore
+	./packages/client-sdk/tools
+	./packages/client-sdk/vb6/tools
+	./packages/shared-types/go
+)

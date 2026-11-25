@@ -1,0 +1,41 @@
+{
+  "name": "calyx-monorepo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Self-hosted integration engine for WhatsApp, through WhatsApp Web (whatsmeow) or the Meta WhatsApp Business Cloud API.",
+  "license": "AGPL-3.0-only",
+  "author": "CSMarckitus <88045486+CSMarckitus@users.noreply.github.com>",
+  "keywords": [
+    "whatsapp-integration",
+    "business-communication",
+    "api-wrapper",
+    "sme-solutions",
+    "customer-engagement",
+    "enterprise-messaging",
+    "open-source-api",
+    "whatsapp-bridge",
+    "developer-tools",
+    "automated-notifications",
+    "whatsmeow",
+    "whatsapp-cloud-api"
+  ],
+  "packageManager": "pnpm@10.32.1",
+  "engines": {
+    "node": ">=22.18.0",
+    "pnpm": ">=10.32.1"
+  },
+  "scripts": {
+    "preinstall": "npx only-allow pnpm",
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "version:sync": "node scripts/version.ts sync",
+    "version:check": "node scripts/version.ts check",
+    "version:image-check": "node scripts/version.ts image-check",
+    "version:test": "node --test scripts/version.test.ts"
+  },
+  "devDependencies": {
+    "turbo": "^2.8.17"
+  }
+}

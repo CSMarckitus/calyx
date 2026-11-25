@@ -1,0 +1,39 @@
+{
+  "cases": [
+    {
+      "name": "connection.update",
+      "body": "{\"id\":\"evt-1\",\"event\":\"connection.update\",\"instance\":\"main\",\"timestamp\":\"2026-11-20T10:00:00.123456789Z\",\"data\":{\"status\":\"CONNECTED\"}}",
+      "expected": {"event": "connection.update", "payload": {"status": "CONNECTED"}}
+    },
+    {
+      "name": "message.received",
+      "body": "{\"id\":\"evt-2\",\"event\":\"message.received\",\"instance\":\"main\",\"timestamp\":\"2026-11-20T10:00:01.5Z\",\"data\":{\"messageId\":\"m1\",\"chatId\":\"34600000000@s.whatsapp.net\",\"chatAltId\":\"1234@lid\",\"from\":\"34600000000@s.whatsapp.net\",\"fromAltId\":\"1234@lid\",\"isGroup\":false,\"pushName\":\"Ana\",\"timestamp\":1795255200,\"type\":\"text\",\"text\":\"Hello\"}}",
+      "expected": {"event": "message.received", "payload": {"messageId": "m1", "chatId": "34600000000@s.whatsapp.net", "chatAltId": "1234@lid", "from": "34600000000@s.whatsapp.net", "fromAltId": "1234@lid", "isGroup": false, "pushName": "Ana", "timestamp": 1795255200, "type": "text", "text": "Hello"}}
+    },
+    {
+      "name": "message.status",
+      "body": "{\"id\":\"evt-3\",\"event\":\"message.status\",\"instance\":\"main\",\"timestamp\":\"2026-11-20T10:00:02Z\",\"data\":{\"messageId\":\"m1\",\"chatId\":\"34600000000@s.whatsapp.net\",\"status\":\"delivered\"}}",
+      "expected": {"event": "message.status", "payload": {"messageId": "m1", "chatId": "34600000000@s.whatsapp.net", "status": "delivered"}}
+    },
+    {
+      "name": "bulk.finished",
+      "body": "{\"id\":\"evt-4\",\"event\":\"bulk.finished\",\"instance\":\"main\",\"timestamp\":\"2026-11-20T10:05:00Z\",\"data\":{\"jobId\":\"job-1\",\"status\":\"COMPLETED\",\"totalMessages\":10,\"sentMessages\":9,\"failedMessages\":1}}",
+      "expected": {"event": "bulk.finished", "payload": {"jobId": "job-1", "status": "COMPLETED", "totalMessages": 10, "sentMessages": 9, "failedMessages": 1}}
+    },
+    {
+      "name": "unknown field in the envelope and in the payload",
+      "body": "{\"id\":\"evt-5\",\"event\":\"connection.update\",\"instance\":\"main\",\"timestamp\":\"2026-11-20T10:00:03Z\",\"newEnvelopeField\":1,\"data\":{\"status\":\"DISCONNECTED\",\"newPayloadField\":\"x\"}}",
+      "expected": {"event": "connection.update", "payload": {"status": "DISCONNECTED"}}
+    },
+    {
+      "name": "invalid event: no id",
+      "body": "{\"event\":\"connection.update\",\"instance\":\"main\",\"timestamp\":\"2026-11-20T10:00:04Z\",\"data\":{\"status\":\"CONNECTED\"}}",
+      "expected": {"error": "invalid_event"}
+    },
+    {
+      "name": "invalid event: empty id",
+      "body": "{\"id\":\"\",\"event\":\"connection.update\",\"instance\":\"main\",\"timestamp\":\"2026-11-20T10:00:05Z\",\"data\":{\"status\":\"CONNECTED\"}}",
+      "expected": {"error": "invalid_event"}
+    }
+  ]
+}

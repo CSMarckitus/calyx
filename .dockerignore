@@ -1,0 +1,12 @@
+# Never send sessions or databases to the Docker build.
+**/data/
+**/*.sqlite*
+**/.env
+**/node_modules/
+**/dist/
+.git/
+.turbo/
+docs/
+**/dist-csp/
+**/test-results/
+**/playwright-report/

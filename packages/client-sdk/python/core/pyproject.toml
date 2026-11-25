@@ -1,0 +1,64 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "calyx-client-sdk-core"
+# src/calyx_client_sdk_core/_version.py and the backend package have the same value. Tests compare
+# them.
+version = "0.1.0"
+description = "Python client for the gRPC API of the Calyx core."
+readme = "README.md"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+authors = [{ name = "CSMarckitus", email = "88045486+CSMarckitus@users.noreply.github.com" }]
+requires-python = ">=3.12"
+dependencies = [
+  "calyx-client-sdk==0.1.0",
+  "googleapis-common-protos>=1.76,<2",
+  "grpcio>=1.80,<2",
+  "protobuf>=6.33.5,<8",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/calyx_client_sdk_core"]
+
+[tool.pytest]
+strict = true
+testpaths = ["tests"]
+addopts = ["--import-mode=importlib"]
+# The tests share the modules of this folder, and the module certificates of the backend tests.
+pythonpath = ["tests", "../backend/tests"]
+# A warning is an error. This includes a socket or a file that the code did not close.
+filterwarnings = ["error"]
+# The run stops when one test takes more than 10 s.
+faulthandler_timeout = 10
+faulthandler_exit_on_timeout = true
+
+[tool.ruff]
+line-length = 100
+# The code from protoc.
+extend-exclude = ["src/calyx_client_sdk_core/_proto"]
+
+[tool.ruff.lint]
+# BLE refuses "except Exception". The SDK catches named errors only.
+select = ["E4", "E7", "E9", "F", "ASYNC", "B", "BLE", "I", "UP"]
+
+[tool.mypy]
+strict = true
+python_version = "3.12"
+
+[[tool.mypy.overrides]]
+# The .pyi files from protoc are not strict.
+module = "calyx_client_sdk_core._proto.*"
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+# googleapis-common-protos has types, but no py.typed.
+module = "google.rpc.*"
+follow_untyped_imports = true
+
+[tool.pyright]
+typeCheckingMode = "strict"
+pythonVersion = "3.12"
+ignore = ["**/_proto"]

@@ -1,0 +1,14 @@
+# The agent can read the system and write in the repository, but it cannot read the .env files,
+# which hold the secrets. Codex loads this file only when you trust the project.
+default_permissions = "calyx"
+
+[permissions.calyx]
+description = "Workspace access without the .env files."
+
+[permissions.calyx.filesystem]
+":root" = "read"
+
+[permissions.calyx.filesystem.":workspace_roots"]
+"." = "write"
+"**/.env" = "none"
+"**/.env.local" = "none"

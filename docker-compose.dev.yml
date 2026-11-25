@@ -1,0 +1,50 @@
+# Development override for the Go services: they run the source of this folder with "go run".
+# A change in the code needs only a restart of the service, not a new image.
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml --profile backend up backend core postgres
+# Then run "pnpm --filter @calyx/frontend dev" and open http://localhost:5173. The API is at
+# http://localhost:8080. Traefik does not start: the backend publishes its port here.
+# The profile "local" uses the same port, so the two do not run together.
+services:
+  core:
+    build:
+      target: dev
+    volumes:
+      - ./:/src
+      - go-mod-cache:/go/pkg/mod
+      - go-build-cache:/root/.cache/go-build
+      # Another volume than production: the dev container runs as root.
+      - core-data-dev:/data
+
+  backend:
+    build:
+      target: dev
+    ports:
+      - "127.0.0.1:8080:8080"
+    volumes:
+      - ./:/src
+      - go-mod-cache:/go/pkg/mod
+      - go-build-cache:/root/.cache/go-build
+    environment:
+      # The origin of the page of "pnpm dev": the backend accepts a change only from it.
+      - PUBLIC_URL=http://localhost:5173
+      - TRUST_PROXY=false
+      - MCP_ENABLED=true
+      - LOG_FORMAT=text
+
+  # PostgreSQL for the backend and frontend tests. Start it only by its name:
+  #   docker compose -f docker-compose.dev.yml --profile test up -d postgres-test
+  # Then: TEST_DATABASE_URL=postgres://postgres:postgres@127.0.0.1:55432/postgres
+  postgres-test:
+    profiles: ["test"]
+    image: postgres:17-alpine
+    environment:
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - "127.0.0.1:55432:5432"
+    tmpfs:
+      - /var/lib/postgresql/data
+
+volumes:
+  go-mod-cache:
+  go-build-cache:
+  core-data-dev:

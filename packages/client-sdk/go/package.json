@@ -1,0 +1,15 @@
+{
+  "name": "@calyx/client-sdk-go",
+  "private": true,
+  "license": "Apache-2.0",
+  "description": "Go client for the Calyx backend and core APIs, with webhook checks.",
+  "scripts": {
+    "test": "GOPRIVATE='github.com/csmarckitus/*' go test -race ./...",
+    "test:go1.26": "GOPRIVATE='github.com/csmarckitus/*' GOTOOLCHAIN=local GOWORK=off mise exec go@1.26 -- go test -race ./...",
+    "vet": "GOPRIVATE='github.com/csmarckitus/*' go vet ./...",
+    "lint": "GOPRIVATE='github.com/csmarckitus/*' go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.15.0 run --config ../../../.golangci.yml ./...",
+    "deps:check": "GOPRIVATE='github.com/csmarckitus/*'; export GOPRIVATE; out=$(go list -deps -f '{{if not .Standard}}{{.ImportPath}}{{end}}' ./calyx ./webhook ./backend) || exit 1; printf '%s\\n' \"$out\" | grep -v '^$' | grep -v '^github.com/csmarckitus/calyx/packages/client-sdk/go/' | (! grep .)",
+    "generate": "cd backend && GOPRIVATE='github.com/csmarckitus/*' go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@v2.8.1 -config oapi-codegen.yaml ../../../shared-types/openapi/backend.json || exit 1; ! grep -q '\"<nil>\"' types_gen.go",
+    "generate:check": "tmp=$(mktemp -d) || exit 1; trap 'rm -rf \"$tmp\"' EXIT; cp backend/oapi-codegen.yaml backend/overlay.yaml \"$tmp\" || exit 1; spec=$(cd ../../shared-types/openapi && pwd)/backend.json; (cd \"$tmp\" && GOPRIVATE='github.com/csmarckitus/*' go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@v2.8.1 -config oapi-codegen.yaml \"$spec\") || exit 1; ! grep -q '\"<nil>\"' \"$tmp/types_gen.go\" || { echo 'the generated file has a <nil> value' >&2; exit 1; }; cmp -s \"$tmp/types_gen.go\" backend/types_gen.go || { echo 'backend/types_gen.go is out of date' >&2; exit 1; }"
+  }
+}

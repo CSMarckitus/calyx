@@ -1,0 +1,8 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+  - "packages/client-sdk/*"
+
+onlyBuiltDependencies:
+  - "esbuild"
+  - "protobufjs"

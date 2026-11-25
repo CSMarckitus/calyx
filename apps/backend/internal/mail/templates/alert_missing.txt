@@ -1,0 +1,16 @@
+Subject: [Calyx] {{.InstanceName}} no longer exists in the core
+
+Hello,
+
+The instance "{{.InstanceName}}" of the client "{{.ClientName}}" ({{.OrganizationName}}) is in the records of Calyx, but the core no longer has it. This was found at {{.Since.UTC.Format "2006-01-02 15:04 UTC"}}.
+
+The instance cannot send or receive messages. Somebody may have removed it directly in the core, or the database of the core was replaced.
+
+Open {{.Link}} in Calyx. Then remove the instance, and create it again.
+
+With the API: DELETE {{.APILink}}
+
+You receive this mail once for this problem.
+
+-- 
+Calyx at {{.PublicURL}}

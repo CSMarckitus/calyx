@@ -1,0 +1,3 @@
+# protoc for the core package. It has its own lock file, because it needs protobuf below 7, and the
+# tests use the newest protobuf. A newer grpcio-tools raises the lowest protobuf of the users.
+grpcio-tools==1.80.1

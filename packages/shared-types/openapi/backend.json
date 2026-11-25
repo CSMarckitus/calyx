@@ -1,0 +1,3570 @@
+{
+  "components": {
+    "schemas": {
+      "AcknowledgementRequest": {
+        "additionalProperties": false,
+        "description": "The acceptance of the WhatsApp Web terms.",
+        "properties": {
+          "accept": {
+            "description": "Must be true.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "accept"
+        ],
+        "type": "object"
+      },
+      "Alert": {
+        "additionalProperties": false,
+        "description": "A problem of an instance that needs attention.",
+        "properties": {
+          "emailed_at": {
+            "description": "When the alert mail was sent to the owner, RFC 3339 in UTC. null when no mail was sent yet.",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "kind": {
+            "description": "The problem of the instance: needs_auth, error, disconnected or missing.",
+            "type": "string"
+          },
+          "since": {
+            "description": "When the alert opened, RFC 3339 in UTC. null when the time is unknown.",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "kind",
+          "since",
+          "emailed_at"
+        ],
+        "type": "object"
+      },
+      "ApiKey": {
+        "additionalProperties": false,
+        "description": "An API key of a user. A program sends it as a Bearer token.",
+        "properties": {
+          "created_at": {
+            "description": "When the key was created, RFC 3339 in UTC.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "description": "The id of the API key, a UUID.",
+            "type": "string"
+          },
+          "last_used_at": {
+            "description": "When the key was last used, RFC 3339 in UTC, updated at most once per minute. null when it was never used.",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "description": "The name of the API key.",
+            "type": "string"
+          },
+          "prefix": {
+            "description": "The first 8 characters of the key after cx_, to recognize it.",
+            "type": "string"
+          },
+          "token": {
+            "description": "The whole key. Present only in the answer that creates it.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "prefix",
+          "created_at",
+          "last_used_at"
+        ],
+        "type": "object"
+      },
+      "ApiKeyList": {
+        "additionalProperties": false,
+        "description": "The active API keys of the user, newest first.",
+        "properties": {
+          "items": {
+            "description": "The items of the list. Empty when there are none.",
+            "items": {
+              "$ref": "#/components/schemas/ApiKey"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "type": "object"
+      },
+      "BulkJob": {
+        "additionalProperties": false,
+        "description": "A bulk job: many messages that one instance sends in the background, with delays between them.",
+        "properties": {
+          "created_at": {
+            "description": "When the job was created, RFC 3339 in UTC.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "estimated_finish_at": {
+            "description": "When the job will probably finish, RFC 3339 in UTC. null when status is not RUNNING.",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "failed_messages": {
+            "description": "The number of messages that failed or have an unknown result. The job does not try them again.",
+            "format": "int32",
+            "type": "integer"
+          },
+          "id": {
+            "description": "The id of the job, a UUID.",
+            "type": "string"
+          },
+          "instance_id": {
+            "description": "The instance that sends the messages, a UUID.",
+            "type": "string"
+          },
+          "progress_percent": {
+            "description": "The share of the messages that are sent or failed, from 0 to 100.",
+            "format": "float",
+            "type": "number"
+          },
+          "replayed": {
+            "description": "True only in the answer to the request that creates the job, when an earlier request with the same Idempotency-Key created it.",
+            "type": "boolean"
+          },
+          "sent_messages": {
+            "description": "The number of messages that WhatsApp accepted.",
+            "format": "int32",
+            "type": "integer"
+          },
+          "status": {
+            "description": "QUEUED means that the job has not started, for example because another job of the instance runs. COMPLETED means that every message was tried, and FAILED that the job stopped, for example because the instance got NEEDS_AUTH.",
+            "enum": [
+              "QUEUED",
+              "RUNNING",
+              "COMPLETED",
+              "CANCELLED",
+              "FAILED"
+            ],
+            "type": "string"
+          },
+          "total_messages": {
+            "description": "The number of messages in the job.",
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "instance_id",
+          "status",
+          "total_messages",
+          "sent_messages",
+          "failed_messages",
+          "progress_percent",
+          "estimated_finish_at",
+          "created_at",
+          "replayed"
+        ],
+        "type": "object"
+      },
+      "BulkJobList": {
+        "additionalProperties": false,
+        "description": "The latest bulk jobs of an instance, newest first, at most 50.",
+        "properties": {
+          "items": {
+            "description": "The items of the list. Empty when there are none.",
+            "items": {
+              "$ref": "#/components/schemas/BulkJob"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "type": "object"
+      },
+      "BulkMessageInput": {
+        "additionalProperties": false,
+        "description": "One message of a bulk job.",
+        "properties": {
+          "delay_ms": {
+            "description": "0 to 2147483647 milliseconds. A fixed time to wait before this message, instead of a random delay of the pacing. The core refuses a value under its minimum.",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "text": {
+            "description": "At most 4096 characters, and not only spaces. The text is sent unchanged.",
+            "type": "string"
+          },
+          "to": {
+            "description": "Not empty. At most 64 bytes. The core checks the format.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "to",
+          "text"
+        ],
+        "type": "object"
+      },
+      "BulkPacingInput": {
+        "additionalProperties": false,
+        "description": "The pacing of a bulk job: an absent field gets the default of the provider, and a value under its minimum is refused. META_CLOUD takes no pauses and ignores pause_every and pause_duration.",
+        "properties": {
+          "delay": {
+            "$ref": "#/components/schemas/RangeInput",
+            "description": "The delay between two messages, in milliseconds. Optional. An explicit null is the same as an absent field."
+          },
+          "pause_duration": {
+            "$ref": "#/components/schemas/RangeInput",
+            "description": "The length of a pause, in milliseconds. Optional. An explicit null is the same as an absent field."
+          },
+          "pause_every": {
+            "$ref": "#/components/schemas/RangeInput",
+            "description": "The number of messages between two pauses. Optional. An explicit null is the same as an absent field."
+          }
+        },
+        "type": "object"
+      },
+      "ChangePasswordRequest": {
+        "additionalProperties": false,
+        "description": "The current password and the new one.",
+        "properties": {
+          "current_password": {
+            "description": "The password that the user has now.",
+            "type": "string"
+          },
+          "new_password": {
+            "description": "10 to 128 characters.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "current_password",
+          "new_password"
+        ],
+        "type": "object"
+      },
+      "Changed": {
+        "additionalProperties": false,
+        "description": "The data of the event changed: always empty. Read the screen again.",
+        "type": "object"
+      },
+      "Client": {
+        "additionalProperties": false,
+        "description": "A client of the organization. Its instances are apart from those of the other clients.",
+        "properties": {
+          "can_create_instances": {
+            "description": "True when the user of this client can create instances. It does not limit an owner.",
+            "type": "boolean"
+          },
+          "id": {
+            "description": "The id of the client, a UUID.",
+            "type": "string"
+          },
+          "instance_count": {
+            "description": "The number of instances of this client, in every state.",
+            "format": "int64",
+            "type": "integer"
+          },
+          "is_default": {
+            "description": "True for the default client of the organization. It has no user and cannot be deleted.",
+            "type": "boolean"
+          },
+          "max_instances": {
+            "description": "The largest number of instances of this client. 0 means no limit of its own: only the limit of the organization applies.",
+            "format": "int32",
+            "type": "integer"
+          },
+          "name": {
+            "description": "The name of the client.",
+            "type": "string"
+          },
+          "pending_invitation": {
+            "description": "The invitation that nobody accepted yet, also an expired one. null when there is none.",
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/PendingInvitation"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "user_email": {
+            "description": "The email address of the user of this client. null when the client has no active user.",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "is_default",
+          "can_create_instances",
+          "max_instances",
+          "instance_count",
+          "user_email",
+          "pending_invitation"
+        ],
+        "type": "object"
+      },
+      "ClientList": {
+        "additionalProperties": false,
+        "description": "The clients of the organization: the default client, then the others, oldest first.",
+        "properties": {
+          "items": {
+            "description": "The items of the list. Empty when there are none.",
+            "items": {
+              "$ref": "#/components/schemas/Client"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "type": "object"
+      },
+      "CreateAPIKeyRequest": {
+        "additionalProperties": false,
+        "description": "A new API key.",
+        "properties": {
+          "name": {
+            "description": "1 to 100 characters; spaces at the start and end are not counted.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "type": "object"
+      },
+      "CreateBulkJobRequest": {
+        "additionalProperties": false,
+        "description": "A new bulk job: recipients with one text, or messages with their own texts.",
+        "properties": {
+          "messages": {
+            "description": "1 to 5000 messages. Use it without recipients and text. More than 5000 gives 413 too_many_messages.",
+            "items": {
+              "$ref": "#/components/schemas/BulkMessageInput"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "pacing": {
+            "$ref": "#/components/schemas/BulkPacingInput",
+            "description": "The pacing of the job. The core keeps its minimums. Optional. An explicit null is the same as an absent field."
+          },
+          "recipients": {
+            "description": "1 to 5000 recipients. Use it with text, and without messages. More than 5000 gives 413 too_many_messages.",
+            "items": {
+              "description": "Not empty. At most 64 bytes. The core checks the format.",
+              "type": "string"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "text": {
+            "description": "At most 4096 characters, and not only spaces. The text is sent unchanged.",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "type": "object"
+      },
+      "CreateClientRequest": {
+        "additionalProperties": false,
+        "description": "A new client.",
+        "properties": {
+          "can_create_instances": {
+            "description": "The default is false.",
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "max_instances": {
+            "description": "0 to 10000. 0 means no limit of its own.",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "name": {
+            "description": "1 to 100 characters; spaces at the start and end are not counted.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "type": "object"
+      },
+      "CreateInstanceRequest": {
+        "additionalProperties": false,
+        "description": "A new instance. WHATSAPP_WEB needs locale, and META_CLOUD needs meta_credentials.",
+        "properties": {
+          "client_id": {
+            "description": "A UUID. A client user creates for its own client; an owner creates for the default client when the field is absent.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "device_identity": {
+            "description": "WHATSAPP_WEB only. What the phone shows in its list of linked devices. Without it, the core picks one at random, also at each new pairing. It does not change the risk of a ban.",
+            "enum": [
+              "CHROME_WINDOWS",
+              "EDGE_WINDOWS",
+              "FIREFOX_WINDOWS",
+              "FIREFOX_LINUX",
+              "SAFARI_MAC_OS"
+            ],
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "display_name": {
+            "description": "1 to 100 characters; spaces at the start and end are not counted.",
+            "type": "string"
+          },
+          "locale": {
+            "description": "WHATSAPP_WEB only. 5 characters: two lower-case letters, a hyphen, two upper-case letters, for example es-ES. A new WHATSAPP_WEB instance needs it; a new pairing without it keeps the stored one. It does not change the risk of a ban.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "meta_credentials": {
+            "$ref": "#/components/schemas/MetaCredentialsInput",
+            "description": "Required for META_CLOUD, and only for META_CLOUD."
+          },
+          "pairing": {
+            "description": "WHATSAPP_WEB only: qr or code. The default is qr.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "phone": {
+            "description": "Required when pairing is code: 7 to 15 digits, no other characters.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "provider": {
+            "description": "WHATSAPP_WEB (unofficial, paired with a phone) or META_CLOUD (the official Meta Cloud API).",
+            "enum": [
+              "WHATSAPP_WEB",
+              "META_CLOUD"
+            ],
+            "type": "string"
+          },
+          "send_only": {
+            "description": "WHATSAPP_WEB only. The default is false.",
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "webhooks": {
+            "description": "At most 20 webhooks, one per event. An instance used only for sending has none.",
+            "items": {
+              "$ref": "#/components/schemas/WebhookInput"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "display_name",
+          "provider"
+        ],
+        "type": "object"
+      },
+      "CreateInstanceResult": {
+        "additionalProperties": false,
+        "description": "A new instance and the first update of its pairing.",
+        "properties": {
+          "instance": {
+            "$ref": "#/components/schemas/Instance",
+            "description": "The new instance."
+          },
+          "pairing": {
+            "$ref": "#/components/schemas/Pairing",
+            "description": "The first update of the pairing. When its status is not CONNECTED, get the next ones from the pairing stream."
+          }
+        },
+        "required": [
+          "instance",
+          "pairing"
+        ],
+        "type": "object"
+      },
+      "Done": {
+        "additionalProperties": false,
+        "description": "The data of the event done: the pairing is finished and the instance is connected.",
+        "properties": {
+          "status": {
+            "description": "Always CONNECTED.",
+            "enum": [
+              "CONNECTED"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "type": "object"
+      },
+      "EmailRequest": {
+        "additionalProperties": false,
+        "description": "The email address of the user.",
+        "properties": {
+          "email": {
+            "description": "An email address. At most 254 bytes; spaces at the start and end are not counted.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email"
+        ],
+        "type": "object"
+      },
+      "Failed": {
+        "additionalProperties": false,
+        "description": "The data of the event failed: the pairing ended and the instance is not connected.",
+        "properties": {
+          "code": {
+            "description": "pairing_expired (not finished in time), pairing_failed or pairing_cancelled.",
+            "enum": [
+              "pairing_expired",
+              "pairing_failed",
+              "pairing_cancelled"
+            ],
+            "type": "string"
+          },
+          "detail": {
+            "description": "A sentence for people that says why the pairing ended.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "detail"
+        ],
+        "type": "object"
+      },
+      "Instance": {
+        "additionalProperties": false,
+        "description": "One WhatsApp number that Calyx manages.",
+        "properties": {
+          "alert": {
+            "description": "The open alert of the instance. null when there is none.",
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/Alert"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "client_id": {
+            "description": "The client that the instance belongs to, a UUID.",
+            "type": "string"
+          },
+          "device_identity": {
+            "description": "What the phone shows in its linked devices: CHROME_WINDOWS, EDGE_WINDOWS, FIREFOX_WINDOWS, FIREFOX_LINUX or SAFARI_MAC_OS. null for META_CLOUD, or when it is not known.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "display_name": {
+            "description": "The name of the instance in Calyx. WhatsApp does not see it.",
+            "type": "string"
+          },
+          "enabled": {
+            "description": "False for a disabled instance: it does not connect and cannot send.",
+            "type": "boolean"
+          },
+          "id": {
+            "description": "The id of the instance, a UUID.",
+            "type": "string"
+          },
+          "locale": {
+            "description": "The language and the country that WhatsApp gets, for example es-ES. null for META_CLOUD, or when none is stored.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "phone_number_id": {
+            "description": "The phone number id that Meta gave. null for WHATSAPP_WEB.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "provider": {
+            "description": "WHATSAPP_WEB (unofficial, paired with a phone) or META_CLOUD (the official Meta Cloud API).",
+            "enum": [
+              "WHATSAPP_WEB",
+              "META_CLOUD"
+            ],
+            "type": "string"
+          },
+          "send_only": {
+            "description": "True for a WHATSAPP_WEB instance that connects only to send. It receives no messages and has no webhooks.",
+            "type": "boolean"
+          },
+          "state": {
+            "description": "creating (not ready yet), active, removing (the removal is not finished) or missing (Calyx cannot find it). A missing instance can return to active; if not, remove it and create it again.",
+            "enum": [
+              "creating",
+              "active",
+              "removing",
+              "missing"
+            ],
+            "type": "string"
+          },
+          "status": {
+            "description": "The last known connection status. NEEDS_AUTH needs a new pairing (META_CLOUD: new meta_credentials), ERROR cannot be paired again, and null means no status yet.",
+            "enum": [
+              "CONNECTED",
+              "CONNECTING",
+              "NEEDS_AUTH",
+              "DISCONNECTED",
+              "ERROR",
+              null
+            ],
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status_changed_at": {
+            "description": "When Calyx saw status change, RFC 3339 in UTC. null when status is null.",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status_stale": {
+            "description": "True when Calyx cannot check the instances now, so status can be out of date.",
+            "type": "boolean"
+          },
+          "webhooks": {
+            "description": "The webhooks of the instance, at most one per event. Empty when there are none.",
+            "items": {
+              "$ref": "#/components/schemas/Webhook"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "client_id",
+          "display_name",
+          "provider",
+          "send_only",
+          "enabled",
+          "state",
+          "status",
+          "status_changed_at",
+          "status_stale",
+          "device_identity",
+          "locale",
+          "phone_number_id",
+          "webhooks",
+          "alert"
+        ],
+        "type": "object"
+      },
+      "InstanceList": {
+        "additionalProperties": false,
+        "description": "The instances that you can use, oldest first.",
+        "properties": {
+          "items": {
+            "description": "The items of the list. Empty when there are none.",
+            "items": {
+              "$ref": "#/components/schemas/Instance"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "type": "object"
+      },
+      "Invitation": {
+        "additionalProperties": false,
+        "description": "An invitation to the user of a client.",
+        "properties": {
+          "email": {
+            "description": "The email address of the invited person.",
+            "type": "string"
+          },
+          "expires_at": {
+            "description": "When the invitation expires, RFC 3339 in UTC.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "invite_link": {
+            "description": "The invitation link. null when the mail was sent.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "mail_sent": {
+            "description": "True when the invitation mail was sent. When false, send invite_link to the person.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "email",
+          "expires_at",
+          "mail_sent",
+          "invite_link"
+        ],
+        "type": "object"
+      },
+      "InvitationLookup": {
+        "additionalProperties": false,
+        "description": "The invitation of a token: the email and the name of the organization. The token stays valid.",
+        "properties": {
+          "email": {
+            "description": "The email address of the invited person. It becomes the email of the login.",
+            "type": "string"
+          },
+          "expires_at": {
+            "description": "When the invitation expires, RFC 3339 in UTC.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "organization_name": {
+            "description": "The name of the organization that sent the invitation.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "organization_name",
+          "expires_at"
+        ],
+        "type": "object"
+      },
+      "InviteClientUserRequest": {
+        "additionalProperties": false,
+        "description": "The person to invite as the user of a client.",
+        "properties": {
+          "email": {
+            "description": "An email address. At most 254 bytes; spaces at the start and end are not counted.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email"
+        ],
+        "type": "object"
+      },
+      "LoginRequest": {
+        "additionalProperties": false,
+        "description": "The email address and the password of a user.",
+        "properties": {
+          "email": {
+            "description": "The email address of the user.",
+            "type": "string"
+          },
+          "password": {
+            "description": "The password of the user.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ],
+        "type": "object"
+      },
+      "LookupInvitationRequest": {
+        "additionalProperties": false,
+        "description": "The token of an invitation link.",
+        "properties": {
+          "token": {
+            "description": "The token of the invitation link.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "token"
+        ],
+        "type": "object"
+      },
+      "LookupPasswordResetRequest": {
+        "additionalProperties": false,
+        "description": "The token of a reset link.",
+        "properties": {
+          "token": {
+            "description": "The token of the reset link.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "token"
+        ],
+        "type": "object"
+      },
+      "Me": {
+        "additionalProperties": false,
+        "description": "The caller: a user and its organization.",
+        "properties": {
+          "create_instance_problem": {
+            "description": "Why the user cannot create a WHATSAPP_WEB instance in its own client now: whatsapp_web_not_allowed, whatsapp_web_not_acknowledged, instance_creation_not_allowed or quota_exceeded. A later version can add values. null when no rule stops it, and always null for an owner. The answer of createInstance stays the authority.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "organization": {
+            "$ref": "#/components/schemas/MeOrganization",
+            "description": "The organization of the user. A client user gets only id and name."
+          },
+          "user": {
+            "$ref": "#/components/schemas/User",
+            "description": "The user of the API key or of the login."
+          }
+        },
+        "required": [
+          "create_instance_problem",
+          "user",
+          "organization"
+        ],
+        "type": "object"
+      },
+      "MeOrganization": {
+        "additionalProperties": false,
+        "description": "The organization of the caller. An owner gets every field; a client user gets only id and name.",
+        "properties": {
+          "id": {
+            "description": "The id of the organization, a UUID.",
+            "type": "string"
+          },
+          "instance_count": {
+            "description": "The number of instances of the organization, in every state. Absent for a client user.",
+            "format": "int64",
+            "type": "integer"
+          },
+          "max_instances": {
+            "description": "The largest number of instances of the organization, all clients included; 0 allows none. Absent for a client user.",
+            "format": "int32",
+            "type": "integer"
+          },
+          "meta_webhook": {
+            "description": "The values to set in the Meta app of each META_CLOUD instance; null when the server has no Meta webhook. Absent for a client user.",
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/MetaWebhook"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "name": {
+            "description": "The name of the organization.",
+            "type": "string"
+          },
+          "smtp_configured": {
+            "description": "True when the server has a mail server; when false, Calyx sends no alert mail. Absent for a client user.",
+            "type": "boolean"
+          },
+          "whatsapp_web_acknowledged_at": {
+            "description": "When an owner accepted the WhatsApp Web terms, RFC 3339 in UTC; null until then. Absent for a client user.",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "whatsapp_web_allowed": {
+            "description": "False when the operator of the server blocks WHATSAPP_WEB for the organization. Absent for a client user.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "type": "object"
+      },
+      "MetaCredentialsInput": {
+        "additionalProperties": false,
+        "description": "The credentials of a META_CLOUD instance, from the Meta app. All three are required.",
+        "properties": {
+          "access_token": {
+            "description": "1 to 4096 bytes; spaces at the start and end are not counted.",
+            "type": "string"
+          },
+          "app_secret": {
+            "description": "1 to 256 bytes; spaces at the start and end are not counted.",
+            "type": "string"
+          },
+          "phone_number_id": {
+            "description": "1 to 32 digits, no other characters; spaces at the start and end are not counted.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "phone_number_id",
+          "access_token",
+          "app_secret"
+        ],
+        "type": "object"
+      },
+      "MetaWebhook": {
+        "additionalProperties": false,
+        "description": "The values that the Meta app needs to deliver the events of a META_CLOUD instance.",
+        "properties": {
+          "url": {
+            "description": "The callback URL to set in the Meta app.",
+            "type": "string"
+          },
+          "verify_token": {
+            "description": "The verify token to set in the Meta app, next to the URL.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "url",
+          "verify_token"
+        ],
+        "type": "object"
+      },
+      "Organization": {
+        "additionalProperties": false,
+        "description": "The organization: the account that holds the clients and the instances.",
+        "properties": {
+          "id": {
+            "description": "The id of the organization, a UUID.",
+            "type": "string"
+          },
+          "instance_count": {
+            "description": "The number of instances of the organization, in every state.",
+            "format": "int64",
+            "type": "integer"
+          },
+          "max_instances": {
+            "description": "The largest number of instances of the organization, all clients included. 0 allows none.",
+            "format": "int32",
+            "type": "integer"
+          },
+          "meta_webhook": {
+            "description": "The values to set in the Meta app of each META_CLOUD instance. null when the server has no Meta webhook.",
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/MetaWebhook"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "name": {
+            "description": "The name of the organization.",
+            "type": "string"
+          },
+          "smtp_configured": {
+            "description": "True when the server has a mail server. When false, Calyx sends no alert mail.",
+            "type": "boolean"
+          },
+          "whatsapp_web_acknowledged_at": {
+            "description": "When an owner accepted the WhatsApp Web terms, RFC 3339 in UTC. null until then: a new WHATSAPP_WEB instance is refused.",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "whatsapp_web_allowed": {
+            "description": "False when the operator of the server blocks WHATSAPP_WEB for the organization. Then no WHATSAPP_WEB instance can be created or paired.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "max_instances",
+          "instance_count",
+          "whatsapp_web_allowed",
+          "whatsapp_web_acknowledged_at",
+          "meta_webhook",
+          "smtp_configured"
+        ],
+        "type": "object"
+      },
+      "PairInstanceRequest": {
+        "additionalProperties": false,
+        "description": "How to pair a WHATSAPP_WEB instance again.",
+        "properties": {
+          "device_identity": {
+            "description": "WHATSAPP_WEB only. What the phone shows in its list of linked devices. Without it, the core picks one at random, also at each new pairing. It does not change the risk of a ban.",
+            "enum": [
+              "CHROME_WINDOWS",
+              "EDGE_WINDOWS",
+              "FIREFOX_WINDOWS",
+              "FIREFOX_LINUX",
+              "SAFARI_MAC_OS"
+            ],
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "locale": {
+            "description": "WHATSAPP_WEB only. 5 characters: two lower-case letters, a hyphen, two upper-case letters, for example es-ES. A new WHATSAPP_WEB instance needs it; a new pairing without it keeps the stored one. It does not change the risk of a ban.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "pairing": {
+            "description": "qr or code. The default is qr.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "phone": {
+            "description": "Required when pairing is code: 7 to 15 digits, no other characters.",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "type": "object"
+      },
+      "PairResult": {
+        "additionalProperties": false,
+        "description": "The start of a new pairing.",
+        "properties": {
+          "pairing": {
+            "$ref": "#/components/schemas/Pairing",
+            "description": "The first update of the pairing. When its status is not CONNECTED, get the next ones from the pairing stream."
+          }
+        },
+        "required": [
+          "pairing"
+        ],
+        "type": "object"
+      },
+      "Pairing": {
+        "additionalProperties": false,
+        "description": "One update of a pairing. In a QR pairing, use the newest update, because the QR code changes.",
+        "properties": {
+          "message": {
+            "description": "A sentence for people. It can be empty.",
+            "type": "string"
+          },
+          "pairing_code": {
+            "description": "The code to type on the phone, for example ABCD-2345. null in a QR pairing, or when there is no code.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "qr_text": {
+            "description": "The text to draw as a QR code that the phone scans; a newer update replaces it. null in a pairing by code, or when there is no QR code.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "description": "NEEDS_AUTH: use pairing_code or qr_text to pair. CONNECTING means wait for the next update, and CONNECTED means that the pairing is finished.",
+            "enum": [
+              "CONNECTED",
+              "CONNECTING",
+              "NEEDS_AUTH",
+              "DISCONNECTED",
+              "ERROR"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "pairing_code",
+          "qr_text",
+          "message"
+        ],
+        "type": "object"
+      },
+      "PasswordResetLookup": {
+        "additionalProperties": false,
+        "description": "The user of a reset token: its email. The token stays valid.",
+        "properties": {
+          "email": {
+            "description": "The email address of the user whose password the reset changes.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email"
+        ],
+        "type": "object"
+      },
+      "PendingInvitation": {
+        "additionalProperties": false,
+        "description": "The invitation of a client that nobody accepted yet. It can be expired.",
+        "properties": {
+          "email": {
+            "description": "The email address of the invited person.",
+            "type": "string"
+          },
+          "expires_at": {
+            "description": "When the invitation expires, RFC 3339 in UTC. It can be in the past.",
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "expires_at"
+        ],
+        "type": "object"
+      },
+      "Problem": {
+        "additionalProperties": false,
+        "description": "An error answer (RFC 9457). In a program, use code.",
+        "properties": {
+          "code": {
+            "description": "The error code, for example not_found.",
+            "enum": [
+              "api_key_not_allowed",
+              "bulk_outcome_unknown",
+              "change_outcome_unknown",
+              "client_has_instances",
+              "conflict",
+              "core_rejected_token",
+              "core_unavailable",
+              "csrf_check_failed",
+              "default_client",
+              "duplicate_message",
+              "email_in_use",
+              "idempotency_key_conflict",
+              "idempotency_key_outcome_unknown",
+              "instance_connected",
+              "instance_creation_not_allowed",
+              "instance_in_error",
+              "instance_not_connected",
+              "instance_not_ready",
+              "instance_queue_full",
+              "internal",
+              "invalid_request",
+              "not_found",
+              "owner_only",
+              "pairing_in_progress",
+              "pairing_not_supported",
+              "phone_number_id_in_use",
+              "quota_exceeded",
+              "rate_limited",
+              "send_in_progress",
+              "send_outcome_unknown",
+              "token_invalid",
+              "too_many_messages",
+              "unauthenticated",
+              "whatsapp_web_not_acknowledged",
+              "whatsapp_web_not_allowed"
+            ],
+            "type": "string"
+          },
+          "detail": {
+            "description": "A sentence for people that says what went wrong. In a program, use code.",
+            "type": "string"
+          },
+          "errors": {
+            "description": "The first 20 wrong fields; with more than 20, a last item counts the rest. Absent when the error is not about fields.",
+            "items": {
+              "$ref": "#/components/schemas/ProblemField"
+            },
+            "type": "array"
+          },
+          "status": {
+            "description": "The HTTP status.",
+            "format": "int64",
+            "type": "integer"
+          },
+          "title": {
+            "description": "The name of the HTTP status, for example Conflict.",
+            "type": "string"
+          },
+          "type": {
+            "description": "A URI that names the error: https://calyx.dev/errors/ and the code.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "title",
+          "status",
+          "detail",
+          "code"
+        ],
+        "type": "object"
+      },
+      "ProblemField": {
+        "additionalProperties": false,
+        "description": "One wrong field of a request.",
+        "properties": {
+          "location": {
+            "description": "The path of the field in the request, for example body.messages[3].to. body alone is the whole body.",
+            "type": "string"
+          },
+          "message": {
+            "description": "What is wrong with the field. It never repeats the value.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "location",
+          "message"
+        ],
+        "type": "object"
+      },
+      "RangeInput": {
+        "additionalProperties": false,
+        "description": "A range in milliseconds, or in messages for pause_every: Calyx takes random values from min to max. WHATSAPP_WEB refuses equal values, and META_CLOUD ignores pause_every and pause_duration.",
+        "properties": {
+          "max": {
+            "description": "0 to 2147483647. Milliseconds for delay and pause_duration, a count of messages for pause_every. The core refuses a value under its minimum.",
+            "type": "integer"
+          },
+          "min": {
+            "description": "0 to 2147483647. Milliseconds for delay and pause_duration, a count of messages for pause_every. The core refuses a value under its minimum.",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "min",
+          "max"
+        ],
+        "type": "object"
+      },
+      "Replaced": {
+        "additionalProperties": false,
+        "description": "The data of the event replaced: always empty. Close the stream.",
+        "type": "object"
+      },
+      "SendMessageRequest": {
+        "additionalProperties": false,
+        "description": "One text message to one recipient.",
+        "properties": {
+          "text": {
+            "description": "At most 4096 characters, and not only spaces. The text is sent unchanged.",
+            "type": "string"
+          },
+          "to": {
+            "description": "Not empty. At most 64 bytes. The core checks the format.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "to",
+          "text"
+        ],
+        "type": "object"
+      },
+      "SendMessageResult": {
+        "additionalProperties": false,
+        "description": "A message that WhatsApp accepted.",
+        "properties": {
+          "message_id": {
+            "description": "The id of the message in WhatsApp. The message.status events have the same id.",
+            "type": "string"
+          },
+          "replayed": {
+            "description": "True when an earlier request with the same Idempotency-Key sent the message, so this request sent nothing.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "message_id",
+          "replayed"
+        ],
+        "type": "object"
+      },
+      "TokenPasswordRequest": {
+        "additionalProperties": false,
+        "description": "The token of an invitation link or a reset link, and the new password.",
+        "properties": {
+          "password": {
+            "description": "10 to 128 characters.",
+            "type": "string"
+          },
+          "token": {
+            "description": "The token of the invitation link or of the reset link.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "token",
+          "password"
+        ],
+        "type": "object"
+      },
+      "UpdateClientRequest": {
+        "additionalProperties": false,
+        "description": "The changes of a client. An absent or null field keeps its value.",
+        "properties": {
+          "can_create_instances": {
+            "description": "True lets the user of this client create instances. Absent or null keeps the stored value.",
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "max_instances": {
+            "description": "0 to 10000. 0 means no limit of its own.",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "name": {
+            "description": "1 to 100 characters; spaces at the start and end are not counted.",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "type": "object"
+      },
+      "UpdateInstanceRequest": {
+        "additionalProperties": false,
+        "description": "The changes of an instance. An absent or null field keeps its value.",
+        "properties": {
+          "display_name": {
+            "description": "1 to 100 characters; spaces at the start and end are not counted.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "enabled": {
+            "description": "False disables the instance, so it cannot send; true enables it again. Absent or null keeps the stored value.",
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "meta_credentials": {
+            "$ref": "#/components/schemas/MetaCredentialsInput",
+            "description": "The three fields together replace the stored credentials."
+          },
+          "send_only": {
+            "description": "WHATSAPP_WEB only: true needs an instance with no webhooks. Absent or null keeps the stored value.",
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "webhooks": {
+            "description": "At most 20 webhooks, one per event. An instance used only for sending has none.",
+            "items": {
+              "$ref": "#/components/schemas/WebhookInput"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          }
+        },
+        "type": "object"
+      },
+      "UpdateOrganizationRequest": {
+        "additionalProperties": false,
+        "description": "The changes of the organization. An absent or null field keeps its value.",
+        "properties": {
+          "name": {
+            "description": "1 to 100 characters; spaces at the start and end are not counted.",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "type": "object"
+      },
+      "User": {
+        "additionalProperties": false,
+        "description": "A user: the owner of an organization or the user of a client.",
+        "properties": {
+          "client_id": {
+            "description": "The client of a client user, a UUID. null for an owner.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "email": {
+            "description": "The email address of the login, in lower case.",
+            "type": "string"
+          },
+          "id": {
+            "description": "The id of the user, a UUID.",
+            "type": "string"
+          },
+          "organization_id": {
+            "description": "The organization of the user, a UUID.",
+            "type": "string"
+          },
+          "role": {
+            "description": "owner or client. An owner manages the organization; a client user works only with the instances of its own client.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "role",
+          "client_id",
+          "organization_id"
+        ],
+        "type": "object"
+      },
+      "Webhook": {
+        "additionalProperties": false,
+        "description": "A webhook of an instance: the URL that gets one type of event.",
+        "properties": {
+          "event": {
+            "description": "connection.update, message.received, message.status or bulk.finished. Also meta.webhook for META_CLOUD, or whatsmeow.\u003cname\u003e, for example whatsmeow.Receipt, for WHATSAPP_WEB.",
+            "type": "string"
+          },
+          "has_secret": {
+            "description": "True when a secret signs the deliveries. The secret is never returned.",
+            "type": "boolean"
+          },
+          "url": {
+            "description": "The URL that gets each event in a POST request.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "url",
+          "event",
+          "has_secret"
+        ],
+        "type": "object"
+      },
+      "WebhookInput": {
+        "additionalProperties": false,
+        "description": "A webhook: the URL that gets one type of event.",
+        "properties": {
+          "event": {
+            "description": "The event of the webhook. The supported events depend on the provider.",
+            "type": "string"
+          },
+          "secret": {
+            "description": "At most 256 bytes. On create: 1 to 256 bytes, absent or null. On PATCH: absent or null keeps the stored secret only when the event and the URL do not change, an empty string removes it, another value replaces it.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "url": {
+            "description": "At most 2048 bytes. It starts with http:// or https:// and has a host.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "url",
+          "event"
+        ],
+        "type": "object"
+      }
+    },
+    "securitySchemes": {
+      "apiKey": {
+        "description": "Send an API key in the header `Authorization: Bearer \u003ckey\u003e`. Programs use this scheme.",
+        "scheme": "bearer",
+        "type": "http"
+      },
+      "session": {
+        "description": "The browser sends the login cookie of Calyx. Programs cannot use this scheme.",
+        "in": "cookie",
+        "name": "calyx_session",
+        "type": "apiKey"
+      }
+    }
+  },
+  "info": {
+    "description": "## Start here\n\n1. Get an API key from the person who manages Calyx, or create one on the Calyx web page. A key starts with `cx_`.\n2. Send each request to `/api/v1` on the address of Calyx, with the header `Authorization: Bearer \u003ckey\u003e`.\n3. Call `GET /api/v1/me` to check the key.\n4. Send a message with `POST /api/v1/instances/{id}/messages` and an `Idempotency-Key` header. A second request with the\n   same key never sends the message again.\n5. An error answer has the type `application/problem+json`. Read its `code`. When the answer has a `Retry-After` header,\n   wait that number of seconds before the next request.",
+    "license": {
+      "name": "Apache-2.0"
+    },
+    "title": "Calyx backend API",
+    "version": "v1"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/api/v1/api-keys": {
+      "get": {
+        "description": "The keys, newest first. The token is never shown again. Errors: 401 unauthenticated.",
+        "operationId": "listAPIKeys",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiKeyList"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          },
+          {
+            "apiKey": []
+          }
+        ],
+        "summary": "List the API keys of the caller.",
+        "tags": [
+          "Account"
+        ],
+        "x-calyx-roles": [
+          "owner",
+          "client"
+        ]
+      },
+      "post": {
+        "description": "The answer holds the token. The token is shown once. Errors: 400 invalid_request, 401 unauthenticated, 403 csrf_check_failed or api_key_not_allowed.",
+        "operationId": "createAPIKey",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAPIKeyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiKey"
+                }
+              }
+            },
+            "description": "Created"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Create an API key.",
+        "tags": [
+          "Account"
+        ],
+        "x-calyx-roles": [
+          "owner",
+          "client"
+        ]
+      }
+    },
+    "/api/v1/api-keys/{id}": {
+      "delete": {
+        "description": "Errors: 401 unauthenticated, 403 csrf_check_failed, 404 not_found.",
+        "operationId": "revokeAPIKey",
+        "parameters": [
+          {
+            "description": "The id of the API key, a UUID, not the key itself. Any other value gives 404 not_found.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          },
+          {
+            "apiKey": []
+          }
+        ],
+        "summary": "Revoke an API key of the caller.",
+        "tags": [
+          "Account"
+        ],
+        "x-calyx-roles": [
+          "owner",
+          "client"
+        ]
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "description": "The answer sets the session cookie calyx_session (HttpOnly, SameSite=Lax, 90 days). Errors: 400 invalid_request, 401 unauthenticated, 403 csrf_check_failed, 429 rate_limited.",
+        "operationId": "login",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            },
+            "description": "OK",
+            "headers": {
+              "Set-Cookie": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Log in with email and password.",
+        "tags": [
+          "Account"
+        ]
+      }
+    },
+    "/api/v1/auth/logout": {
+      "post": {
+        "description": "The answer clears the session cookie. Errors: 401 unauthenticated, 403 csrf_check_failed or api_key_not_allowed.",
+        "operationId": "logout",
+        "responses": {
+          "204": {
+            "description": "No Content",
+            "headers": {
+              "Set-Cookie": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "End the current session. Applies to sessions only.",
+        "tags": [
+          "Account"
+        ],
+        "x-calyx-roles": [
+          "owner",
+          "client"
+        ]
+      }
+    },
+    "/api/v1/auth/password-reset": {
+      "post": {
+        "description": "The answer is the same for an unknown email. Errors: 400 invalid_request, 403 csrf_check_failed, 429 rate_limited.",
+        "operationId": "requestPasswordReset",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Accepted"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Ask for a password reset mail.",
+        "tags": [
+          "Account"
+        ]
+      }
+    },
+    "/api/v1/auth/password-reset/confirm": {
+      "post": {
+        "description": "Errors: 400 invalid_request, 403 csrf_check_failed, 410 token_invalid, 429 rate_limited.",
+        "operationId": "confirmPasswordReset",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TokenPasswordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Set a new password with a reset token.",
+        "tags": [
+          "Account"
+        ]
+      }
+    },
+    "/api/v1/auth/password-reset/lookup": {
+      "post": {
+        "description": "The token stays valid. A disabled user gives 410. Errors: 400 invalid_request, 403 csrf_check_failed, 410 token_invalid, 429 rate_limited.",
+        "operationId": "lookupPasswordReset",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LookupPasswordResetRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PasswordResetLookup"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Read the email of a reset token before the new password is set.",
+        "tags": [
+          "Account"
+        ]
+      }
+    },
+    "/api/v1/bulk-jobs/{id}": {
+      "get": {
+        "description": "Errors: 401 unauthenticated, 404 not_found, 503 core_unavailable.",
+        "operationId": "getBulkJob",
+        "parameters": [
+          {
+            "description": "The id of the bulk job, a UUID. Any other value gives 404 not_found.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulkJob"
+                }
+              }
+            },
+            "description": "The job."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          },
+          {
+            "apiKey": []
+          }
+        ],
+        "summary": "Read a bulk job.",
+        "tags": [
+          "Bulk jobs"
+        ],
+        "x-calyx-roles": [
+          "owner",
+          "client"
+        ]
+      }
+    },
+    "/api/v1/bulk-jobs/{id}/cancel": {
+      "post": {
+        "description": "A finished job is returned unchanged. Errors: 401 unauthenticated, 403 csrf_check_failed, 404 not_found, 503 core_unavailable.",
+        "operationId": "cancelBulkJob",
+        "parameters": [
+          {
+            "description": "The id of the bulk job, a UUID. Any other value gives 404 not_found.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulkJob"
+                }
+              }
+            },
+            "description": "The job."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          },
+          {
+            "apiKey": []
+          }
+        ],
+        "summary": "Cancel a bulk job.",
+        "tags": [
+          "Bulk jobs"
+        ],
+        "x-calyx-roles": [
+          "owner",
+          "client"
+        ]
+      }
+    },
+    "/api/v1/clients": {
+      "get": {
+        "description": "Errors: 401 unauthenticated, 403 owner_only.",
+        "operationId": "listClients",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientList"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          },
+          {
+            "apiKey": []
+          }
+        ],
+        "summary": "List the clients, the default client included. Owners only.",
+        "tags": [
+          "Clients"
+        ],
+        "x-calyx-roles": [
+          "owner"
+        ]
+      },
+      "post": {
+        "description": "Errors: 400 invalid_request, 401 unauthenticated, 403 owner_only, 403 csrf_check_failed.",
+        "operationId": "createClient",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateClientRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Client"
+                }
+              }
+            },
+            "description": "Created"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          },
+          {
+            "apiKey": []
+          }
+        ],
+        "summary": "Create a client. Owners only.",
+        "tags": [
+          "Clients"
+        ],
+        "x-calyx-roles": [
+          "owner"
+        ]
+      }
+    },
+    "/api/v1/clients/{id}": {
+      "delete": {
+        "description": "Errors: 401 unauthenticated, 403 owner_only, 403 csrf_check_failed, 404 not_found, 409 client_has_instances, 409 default_client.",
+        "operationId": "deleteClient",
+        "parameters": [
+          {
+            "description": "The id of the client, a UUID. Any other value gives 404 not_found.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          },
+          {
+            "apiKey": []
+          }
+        ],
+        "summary": "Delete a client, its user, its sessions, its API keys and its pending invitations. Owners only.",
+        "tags": [
+          "Clients"
+        ],
+        "x-calyx-roles": [
+          "owner"
+        ]
+      },
+      "get": {
+        "description": "Errors: 401 unauthenticated, 403 owner_only, 404 not_found.",
+        "operationId": "getClient",
+        "parameters": [
+          {
+            "description": "The id of the client, a UUID. Any other value gives 404 not_found.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Client"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          },
+          {
+            "apiKey": []
+          }
+        ],
+        "summary": "Read a client. Owners only.",
+        "tags": [
+          "Clients"
+        ],
+        "x-calyx-roles": [
+          "owner"
+        ]
+      },
+      "patch": {
+        "description": "Errors: 400 invalid_request, 401 unauthenticated, 403 owner_only, 403 csrf_check_failed, 404 not_found.",
+        "operationId": "updateClient",
+        "parameters": [
+          {
+            "description": "The id of the client, a UUID. Any other value gives 404 not_found.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateClientRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Client"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          },
+          {
+            "apiKey": []
+          }
+        ],
+        "summary": "Change a client. Owners only.",
+        "tags": [
+          "Clients"
+        ],
+        "x-calyx-roles": [
+          "owner"
+        ]
+      }
+    },
+    "/api/v1/clients/{id}/invitations": {
+      "delete": {
+        "description": "It also deletes an expired invitation. Errors: 401 unauthenticated, 403 owner_only, 403 csrf_check_failed, 403 api_key_not_allowed, 404 not_found (the client has no pending invitation).",
+        "operationId": "cancelInvitation",
+        "parameters": [
+          {
+            "description": "The id of the client, a UUID. Any other value gives 404 not_found.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Cancel the pending invitation of a client. Owners only.",
+        "tags": [
+          "Clients"
+        ],
+        "x-calyx-roles": [
+          "owner"
+        ]
+      },
+      "post": {
+        "description": "An email whose access was removed from this client can return. Errors: 400 invalid_request, 401 unauthenticated, 403 owner_only, 403 csrf_check_failed, 403 api_key_not_allowed, 404 not_found, 409 conflict (the client has a user), 409 default_client.",
+        "operationId": "inviteClientUser",
+        "parameters": [
+          {
+            "description": "The id of the client, a UUID. Any other value gives 404 not_found.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InviteClientUserRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Invitation"
+                }
+              }
+            },
+            "description": "Created"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Invite the user of a client. Owners only.",
+        "tags": [
+          "Clients"
+        ],
+        "x-calyx-roles": [
+          "owner"
+        ]
+      }
+    },
+    "/api/v1/clients/{id}/user": {
+      "delete": {
+        "description": "The user is disabled: its sessions end and its API keys are revoked. The instances, the bulk jobs and the webhooks do not change. A new invitation of the same email to this client gives the access back. Errors: 401 unauthenticated, 403 owner_only, 403 csrf_check_failed, 403 api_key_not_allowed, 404 not_found (the client has no active user).",
+        "operationId": "removeClientAccess",
+        "parameters": [
+          {
+            "description": "The id of the client, a UUID. Any other value gives 404 not_found.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Remove the access of the user of a client. Owners only.",
+        "tags": [
+          "Clients"
+        ],
+        "x-calyx-roles": [
+          "owner"
+        ]
+      }
+    },
+    "/api/v1/events": {
+      "get": {
+        "description": "Only for a login in a browser. Errors: 401 unauthenticated, 403 api_key_not_allowed. The 401 and 403 answers are problems, sent before any stream header.",
+        "operationId": "followEvents",
+        "responses": {
+          "200": {
+            "content": {
+              "text/event-stream": {
+                "schema": {
+                  "description": "Each oneOf object in the array represents one possible Server Sent Events (SSE) message, serialized as UTF-8 text according to the SSE specification.",
+                  "items": {
+                    "oneOf": [
+                      {
+                        "properties": {
+                          "data": {
+                            "$ref": "#/components/schemas/Changed"
+                          },
+                          "event": {
+                            "const": "changed",
+                            "description": "The event name.",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "data",
+                          "event"
+                        ],
+                        "title": "Event changed",
+                        "type": "object"
+                      },
+                      {
+                        "properties": {
+                          "data": {
+                            "$ref": "#/components/schemas/Replaced"
+                          },
+                          "event": {
+                            "const": "replaced",
+                            "description": "The event name.",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "data",
+                          "event"
+                        ],
+                        "title": "Event replaced",
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  "title": "Server Sent Events",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Events: changed (data: {}) and replaced (data: {}). The stream sends one changed at its start. After changed, read the screen again: getMe, the instances and /healthz. After replaced, close the stream and do not connect again immediately: a newer stream of the same user took its place. A comment line \": ping\" comes every 15 seconds. The stream ends with no event when the access of the login ends or the server stops."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Follow the changes that the caller can see, as a stream of server-sent events.",
+        "tags": [
+          "Events"
+        ],
+        "x-calyx-roles": [
+          "owner",
+          "client"
+        ]
+      }
+    },
+    "/api/v1/instances": {
+      "get": {
+        "description": "Errors: 401 unauthenticated.",
+        "operationId": "listInstances",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstanceList"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          },
+          {
+            "apiKey": []
+          }
+        ],
+        "summary": "List the instances in the scope of the caller.",
+        "tags": [
+          "Instances"
+        ],
+        "x-calyx-roles": [
+          "owner",
+          "client"
+        ]
+      },
+      "post": {
+        "description": "A client user can create an instance only when the owner allows it for the client. Errors: 400 invalid_request, 401 unauthenticated, 403 instance_creation_not_allowed, 403 whatsapp_web_not_allowed, 403 whatsapp_web_not_acknowledged, 403 csrf_check_failed, 404 not_found, 409 quota_exceeded, 409 phone_number_id_in_use.",
+        "operationId": "createInstance",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "Meta Cloud API": {
+                  "value": {
+                    "display_name": "Support",
+                    "meta_credentials": {
+                      "access_token": "\u003caccess token\u003e",
+                      "app_secret": "\u003capp secret\u003e",
+                      "phone_number_id": "123456789012345"
+                    },
+                    "provider": "META_CLOUD"
+                  }
+                },
+                "WhatsApp Web": {
+                  "value": {
+                    "display_name": "Shop",
+                    "locale": "es-ES",
+                    "pairing": "qr",
+                    "provider": "WHATSAPP_WEB"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/CreateInstanceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateInstanceResult"
+                }
+              }
+            },
+            "description": "The instance and the first pairing update. The pairing goes on after the answer: follow it with GET /instances/{id}/pairing."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          },
+          {
+            "apiKey": []
+          }
+        ],
+        "summary": "Create an instance and start its pairing.",
+        "tags": [
+          "Instances"
+        ],
+        "x-calyx-roles": [
+          "owner",
+          "client"
+        ]
+      }
+    },
+    "/api/v1/instances/{id}": {
+      "delete": {
+        "description": "Errors: 401 unauthenticated, 403 csrf_check_failed, 404 not_found, 409 pairing_in_progress.",
+        "operationId": "removeInstance",
+        "parameters": [
+          {
+            "description": "The id of the instance, a UUID. Any other value gives 404 not_found.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "The core did not confirm. The instance stays in the state removing and the backend retries. There is no body."
+          },
+          "204": {
+            "description": "The instance is removed."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          },
+          {
+            "apiKey": []
+          }
+        ],
+        "summary": "Remove an instance.",
+        "tags": [
+          "Instances"
+        ],
+        "x-calyx-roles": [
+          "owner",
+          "client"
+        ]
+      },
+      "get": {
+        "description": "Errors: 401 unauthenticated, 404 not_found.",
+        "operationId": "getInstance",
+        "parameters": [
+          {
+            "description": "The id of the instance, a UUID. Any other value gives 404 not_found.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Instance"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          },
+          {
+            "apiKey": []
+          }
+        ],
+        "summary": "Read an instance.",
+        "tags": [
+          "Instances"
+        ],
+        "x-calyx-roles": [
+          "owner",
+          "client"
+        ]
+      },
+      "patch": {
+        "description": "Errors: 400 invalid_request, 401 unauthenticated, 403 csrf_check_failed, 404 not_found, 409 conflict (another change of the instance is running), 409 pairing_in_progress, 504 change_outcome_unknown.",
+        "operationId": "updateInstance",
+        "parameters": [
+          {
+            "description": "The id of the instance, a UUID. Any other value gives 404 not_found.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateInstanceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Instance"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          },
+          {
+            "apiKey": []
+          }
+        ],
+        "summary": "Change an instance. Every field is optional.",
+        "tags": [
+          "Instances"
+        ],
+        "x-calyx-roles": [
+          "owner",
+          "client"
+        ]
+      }
+    },
+    "/api/v1/instances/{id}/bulk-jobs": {
+      "get": {
+        "description": "Errors: 401 unauthenticated, 404 not_found, 503 core_unavailable.",
+        "operationId": "listBulkJobs",
+        "parameters": [
+          {
+            "description": "The id of the instance, a UUID. Any other value gives 404 not_found.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulkJobList"
+                }
+              }
+            },
+            "description": "The jobs, with their status from the core."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          },
+          {
+            "apiKey": []
+          }
+        ],
+        "summary": "List the latest bulk jobs of an instance, newest first, at most 50.",
+        "tags": [
+          "Bulk jobs"
+        ],
+        "x-calyx-roles": [
+          "owner",
+          "client"
+        ]
+      },
+      "post": {
+        "description": "Errors: 400 invalid_request (also the core's pacing refusal), 401 unauthenticated, 403 csrf_check_failed, 404 not_found, 409 instance_not_connected, 409 instance_not_ready, 409 idempotency_key_conflict, 413 too_many_messages, 502 core_rejected_token, 504 bulk_outcome_unknown. Send either recipients with text, or messages. Anti-spam: with text, each recipient appears once; with messages, a recipient gets at most 2 messages. Pacing units: delay and pause_duration are in milliseconds, pause_every counts messages. The backend adds no pacing and never lowers it. A 504 bulk_outcome_unknown means that the job may run in the core without a backend record. With an Idempotency-Key, retry with the same key: the retry gives the job and stores it. Without a key, the job cannot be read or cancelled through the backend, and the core's bulk.finished webhook still reports it. Do not start it again automatically.",
+        "operationId": "createBulkJob",
+        "parameters": [
+          {
+            "description": "The id of the instance, a UUID. Any other value gives 404 not_found.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "1 to 255 printable ASCII characters. Make a new key for each new message, for example a UUID. Use the same key only to retry the same request after an answer that did not arrive. When an answer has a `Retry-After` header, wait for that time, then retry with the same key. After a 504, retry with the same key. The key is kept for 24 hours. All callers of one instance share its keys.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "schema": {
+              "description": "1 to 255 printable ASCII characters. Make a new key for each new message, for example a UUID. Use the same key only to retry the same request after an answer that did not arrive. When an answer has a `Retry-After` header, wait for that time, then retry with the same key. After a 504, retry with the same key. The key is kept for 24 hours. All callers of one instance share its keys.",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBulkJobRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulkJob"
+                }
+              }
+            },
+            "description": "The job."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          },
+          {
+            "apiKey": []
+          }
+        ],
+        "summary": "Start a bulk job: one text for many recipients, or custom messages.",
+        "tags": [
+          "Bulk jobs"
+        ],
+        "x-calyx-roles": [
+          "owner",
+          "client"
+        ]
+      }
+    },
+    "/api/v1/instances/{id}/messages": {
+      "post": {
+        "description": "Errors: 400 invalid_request, 401 unauthenticated, 403 csrf_check_failed, 404 not_found, 409 instance_not_connected, 409 instance_not_ready, 409 idempotency_key_conflict, 409 send_in_progress, 409 idempotency_key_outcome_unknown, 409 duplicate_message, 429 instance_queue_full, 502 core_rejected_token, 504 send_outcome_unknown. A 504 send_outcome_unknown means the message may or may not have been sent. Send an Idempotency-Key header. After a 504, retry with the same key: the core sends the message at most once. After 429 instance_queue_full or 409 send_in_progress, wait for the time in Retry-After, then retry with the same key. Without a key, do not retry automatically. A resend with a known Idempotency-Key gets its answer also while the instance is not connected.",
+        "operationId": "sendMessage",
+        "parameters": [
+          {
+            "description": "The id of the instance, a UUID. Any other value gives 404 not_found.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "1 to 255 printable ASCII characters. Make a new key for each new message, for example a UUID. Use the same key only to retry the same request after an answer that did not arrive. When an answer has a `Retry-After` header, wait for that time, then retry with the same key. After a 504, retry with the same key. The key is kept for 24 hours. All callers of one instance share its keys.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "schema": {
+              "description": "1 to 255 printable ASCII characters. Make a new key for each new message, for example a UUID. Use the same key only to retry the same request after an answer that did not arrive. When an answer has a `Retry-After` header, wait for that time, then retry with the same key. After a 504, retry with the same key. The key is kept for 24 hours. All callers of one instance share its keys.",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SendMessageRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SendMessageResult"
+                }
+              }
+            },
+            "description": "Sent."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          },
+          {
+            "apiKey": []
+          }
+        ],
+        "summary": "Send one text message.",
+        "tags": [
+          "Messages"
+        ],
+        "x-calyx-roles": [
+          "owner",
+          "client"
+        ]
+      }
+    },
+    "/api/v1/instances/{id}/pair": {
+      "post": {
+        "description": "Errors: 400 invalid_request, 401 unauthenticated, 403 whatsapp_web_not_allowed, 403 csrf_check_failed, 404 not_found, 409 conflict (the instance is disabled or another change of it is running), 409 pairing_not_supported, 409 instance_in_error, 409 instance_connected, 409 pairing_in_progress.",
+        "operationId": "pairInstance",
+        "parameters": [
+          {
+            "description": "The id of the instance, a UUID. Any other value gives 404 not_found.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PairInstanceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PairResult"
+                }
+              }
+            },
+            "description": "The first update of the session."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          },
+          {
+            "apiKey": []
+          }
+        ],
+        "summary": "Start a new pairing session for an instance that needs it.",
+        "tags": [
+          "Instances"
+        ],
+        "x-calyx-roles": [
+          "owner",
+          "client"
+        ]
+      }
+    },
+    "/api/v1/instances/{id}/pairing": {
+      "delete": {
+        "description": "Errors: 401 unauthenticated, 403 csrf_check_failed, 404 not_found.",
+        "operationId": "cancelPairing",
+        "parameters": [
+          {
+            "description": "The id of the instance, a UUID. Any other value gives 404 not_found.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          },
+          {
+            "apiKey": []
+          }
+        ],
+        "summary": "Cancel the running pairing session.",
+        "tags": [
+          "Instances"
+        ],
+        "x-calyx-roles": [
+          "owner",
+          "client"
+        ]
+      },
+      "get": {
+        "description": "Errors: 401 unauthenticated, 404 not_found (no session runs and the backend keeps no failure). For 5 minutes after a pairing failed the stream gives the event failed and ends. The 404 answer is a problem, sent before any stream header.",
+        "operationId": "followPairing",
+        "parameters": [
+          {
+            "description": "The id of the instance, a UUID. Any other value gives 404 not_found.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/event-stream": {
+                "schema": {
+                  "description": "Each oneOf object in the array represents one possible Server Sent Events (SSE) message, serialized as UTF-8 text according to the SSE specification.",
+                  "items": {
+                    "oneOf": [
+                      {
+                        "properties": {
+                          "data": {
+                            "$ref": "#/components/schemas/Done"
+                          },
+                          "event": {
+                            "const": "done",
+                            "description": "The event name.",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "data",
+                          "event"
+                        ],
+                        "title": "Event done",
+                        "type": "object"
+                      },
+                      {
+                        "properties": {
+                          "data": {
+                            "$ref": "#/components/schemas/Failed"
+                          },
+                          "event": {
+                            "const": "failed",
+                            "description": "The event name.",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "data",
+                          "event"
+                        ],
+                        "title": "Event failed",
+                        "type": "object"
+                      },
+                      {
+                        "properties": {
+                          "data": {
+                            "$ref": "#/components/schemas/Pairing"
+                          },
+                          "event": {
+                            "const": "update",
+                            "description": "The event name.",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "data",
+                          "event"
+                        ],
+                        "title": "Event update",
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  "title": "Server Sent Events",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Events: update (data: a PairingUpdate), done (data: {\"status\":\"CONNECTED\"}), failed (data: {\"code\":\"pairing_expired|pairing_failed|pairing_cancelled\",\"detail\":\"...\"}). A comment line \": ping\" comes every 15 seconds. The stream ends after done or failed. A stream that ends without one of them means the server stopped: reconnect, or read the instance with GET /instances/{id}."
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          },
+          {
+            "apiKey": []
+          }
+        ],
+        "summary": "Follow the pairing session of an instance as a stream of server-sent events.",
+        "tags": [
+          "Instances"
+        ],
+        "x-calyx-roles": [
+          "owner",
+          "client"
+        ]
+      }
+    },
+    "/api/v1/invitations/accept": {
+      "post": {
+        "description": "The user is created, or a user whose access was removed from the same client returns with the new password, and is logged in. The answer sets the session cookie. Errors: 400 invalid_request, 403 csrf_check_failed, 409 email_in_use (the email already has an account), 410 token_invalid, 429 rate_limited.",
+        "operationId": "acceptInvitation",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TokenPasswordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            },
+            "description": "OK",
+            "headers": {
+              "Set-Cookie": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Accept an invitation and set the password.",
+        "tags": [
+          "Account"
+        ]
+      }
+    },
+    "/api/v1/invitations/lookup": {
+      "post": {
+        "description": "The token stays valid. Errors: 400 invalid_request, 403 csrf_check_failed, 410 token_invalid, 429 rate_limited.",
+        "operationId": "lookupInvitation",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LookupInvitationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvitationLookup"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Read the invitation of a token before it is accepted.",
+        "tags": [
+          "Account"
+        ]
+      }
+    },
+    "/api/v1/me": {
+      "get": {
+        "description": "An owner gets the whole organization, and create_instance_problem is null. A client user gets only the id and the name of its organization, and create_instance_problem. Errors: 401 unauthenticated.",
+        "operationId": "getMe",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Me"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          },
+          {
+            "apiKey": []
+          }
+        ],
+        "summary": "The user and the organization of the caller.",
+        "tags": [
+          "Account"
+        ],
+        "x-calyx-roles": [
+          "owner",
+          "client"
+        ]
+      }
+    },
+    "/api/v1/me/password": {
+      "put": {
+        "description": "This session stays and every other session ends. Errors: 400 invalid_request (the current password is wrong, or the new one breaks the rules), 401 unauthenticated, 403 csrf_check_failed or api_key_not_allowed.",
+        "operationId": "changePassword",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangePasswordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Change the password of the caller.",
+        "tags": [
+          "Account"
+        ],
+        "x-calyx-roles": [
+          "owner",
+          "client"
+        ]
+      }
+    },
+    "/api/v1/organization": {
+      "get": {
+        "description": "Errors: 401 unauthenticated, 403 owner_only.",
+        "operationId": "getOrganization",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Organization"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          },
+          {
+            "apiKey": []
+          }
+        ],
+        "summary": "Read the organization. Owners only.",
+        "tags": [
+          "Organization"
+        ],
+        "x-calyx-roles": [
+          "owner"
+        ]
+      },
+      "patch": {
+        "description": "Errors: 400 invalid_request, 401 unauthenticated, 403 owner_only, 403 csrf_check_failed.",
+        "operationId": "updateOrganization",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateOrganizationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Organization"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          },
+          {
+            "apiKey": []
+          }
+        ],
+        "summary": "Rename the organization. Owners only.",
+        "tags": [
+          "Organization"
+        ],
+        "x-calyx-roles": [
+          "owner"
+        ]
+      }
+    },
+    "/api/v1/organization/whatsapp-web-acknowledgement": {
+      "post": {
+        "description": "Errors: 400 invalid_request (accept must be true), 401 unauthenticated, 403 owner_only, 403 csrf_check_failed, 403 api_key_not_allowed.",
+        "operationId": "acknowledgeWhatsAppWeb",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AcknowledgementRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Organization"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Accept the WhatsApp Web terms. Owners only.",
+        "tags": [
+          "Organization"
+        ],
+        "x-calyx-roles": [
+          "owner"
+        ]
+      }
+    }
+  },
+  "tags": [
+    {
+      "description": "Your user, your password and your API keys.",
+      "name": "Account"
+    },
+    {
+      "description": "The organization and its settings. Only the owner can call these operations.",
+      "name": "Organization"
+    },
+    {
+      "description": "The clients of the organization and their users. Only the owner can call these operations.",
+      "name": "Clients"
+    },
+    {
+      "description": "The WhatsApp numbers: create, read, change, remove and pair them.",
+      "name": "Instances"
+    },
+    {
+      "description": "Send one message from an instance.",
+      "name": "Messages"
+    },
+    {
+      "description": "Send one text or a list of messages to many recipients, with the pacing of the core.",
+      "name": "Bulk jobs"
+    },
+    {
+      "description": "The stream of changes for the Calyx web page. Programs use webhooks instead.",
+      "name": "Events"
+    }
+  ]
+}

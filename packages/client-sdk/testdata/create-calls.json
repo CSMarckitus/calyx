@@ -1,0 +1,5 @@
+{
+  "operations": ["createClient", "createInstance"],
+  "codes": ["timeout", "network_error", "invalid_response", "aborted"],
+  "retry": "unknown"
+}

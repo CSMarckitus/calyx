@@ -1,0 +1,13 @@
+overlay: 1.0.0
+info:
+  title: Calyx Go SDK overlay
+  version: 1.0.0
+actions:
+  # The backend allows a null status for an instance, but in the SDK the status
+  # is always one of the five named values. A null enum value makes the generator write "<nil>".
+  - target: $.components.schemas.Instance.properties.status.enum[?(@ == null)]
+    remove: true
+  # The schema name "Client" would collide with the type backend.Client (the HTTP client).
+  - target: $.components.schemas.Client
+    update:
+      x-go-name: OrgClient

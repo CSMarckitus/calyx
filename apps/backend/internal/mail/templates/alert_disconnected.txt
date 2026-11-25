@@ -1,0 +1,18 @@
+Subject: [Calyx] {{.InstanceName}} is disconnected
+
+Hello,
+
+The instance "{{.InstanceName}}" of the client "{{.ClientName}}" ({{.OrganizationName}}) has had no connection since {{.Since.UTC.Format "2006-01-02 15:04 UTC"}} (status {{.Status}}).
+
+The core tries to connect again by itself. Usual causes: a network problem on the server, or a restart of the servers of WhatsApp.
+
+If the problem continues, check the network of the server and the logs of the core.
+
+Open {{.Link}} in Calyx.
+
+With the API: GET {{.APILink}}
+
+You receive this mail once for this problem.
+
+-- 
+Calyx at {{.PublicURL}}

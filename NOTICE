@@ -1,0 +1,26 @@
+Calyx API
+Copyright (C) 2026 CSMarckitus
+
+This repository contains parts under two licenses:
+
+  - apps/ and everything not listed below: GNU Affero General Public License,
+    version 3 only (see LICENSE).
+  - packages/shared-types and packages/client-sdk: Apache License, Version 2.0
+    (see the LICENSE file inside each package).
+  - packages/client-sdk/vb6/third_party/vba-json and the generated
+    packages/client-sdk/vb6/src/CalyxJson.bas: MIT License (VBA-JSON, Tim Hall).
+  - apps/frontend/src/api/sse.ts: the parser of server-sent events, copied from
+    packages/client-sdk/typescript/src/backend/sse.ts. It stays under the Apache License,
+    Version 2.0 (CSMarckitus).
+  - apps/frontend fonts: IBM Plex Sans, IBM Plex Mono and Source Sans 3, from the packages
+    @fontsource/ibm-plex-sans, @fontsource/ibm-plex-mono and @fontsource/source-sans-3.
+    They stay under the SIL Open Font License 1.1 (OFL-1.1).
+  - apps/frontend docs page (/docs): the package @scalar/api-reference-react and the other
+    @scalar packages. They stay under the MIT License (Scalar). The other packages that they
+    bring are under licenses that AGPL-3.0-only allows.
+
+Calyx uses whatsmeow (https://github.com/tulir/whatsmeow), which is
+distributed under the Mozilla Public License 2.0.
+
+Calyx is not affiliated with, endorsed by or sponsored by WhatsApp or Meta.
+See TRADEMARKS.md.

@@ -1,0 +1,45 @@
+# Dependency directories
+node_modules/
+dist/
+dist-csp/
+test-results/
+playwright-report/
+# Package tarballs from `pnpm pack`
+*.tgz
+
+# Environment variables
+.env
+
+# Logs
+npm-debug.log*
+pnpm-debug.log*
+# Databases with WhatsApp sessions (the Go core)
+**/data/
+*.sqlite
+*.sqlite-*
+
+# Build caches and local tool state
+.turbo/
+*.tsbuildinfo
+.claude/settings.local.json
+
+# VB6 client SDK: build output, editor state and the example INI file (it holds a real API key)
+packages/client-sdk/vb6/**/*.exe
+packages/client-sdk/vb6/**/*.vbw
+packages/client-sdk/vb6/**/calyx-example.ini
+packages/client-sdk/vb6/tests/results.txt
+packages/client-sdk/vb6/tests/probe/probe-results.txt
+packages/client-sdk/vb6/examples/ScheduledSend/scheduled-send.log
+
+# PHP client SDK: Composer packages, tool caches and the built fake core
+packages/client-sdk/php/**/vendor/
+packages/client-sdk/php/**/.phpunit.cache/
+packages/client-sdk/php/**/.php-cs-fixer.cache
+packages/client-sdk/php/fakecore/fakecore
+
+# Python client SDK: bytecode, tool caches and virtual environments
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/

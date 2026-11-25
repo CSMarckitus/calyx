@@ -1,0 +1,14 @@
+Subject: [Calyx] The core "{{.CoreID}}" cannot be reached
+
+Hello,
+
+The backend at {{.PublicURL}} cannot reach the core "{{.CoreID}}" since {{.Since.UTC.Format "2006-01-02 15:04 UTC"}}. Two state checks in a row failed.
+
+While the core cannot be reached, no message can be sent, no instance can be paired, and the status shown for each instance can be old ("status_stale": true). Owners do not receive alerts about this problem.
+
+Check that the core runs, that CORE_ADDRESS is correct, and that CORE_TOKEN is equal to the GRPC_AUTH_TOKEN of the core.
+
+You receive this mail once for this outage.
+
+-- 
+Calyx at {{.PublicURL}}

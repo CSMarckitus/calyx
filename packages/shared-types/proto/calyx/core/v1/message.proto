@@ -1,0 +1,213 @@
+syntax = "proto3";
+
+package calyx.core.v1;
+
+option go_package = "github.com/csmarckitus/calyx/packages/shared-types/go/corev1;corev1";
+
+import "google/protobuf/timestamp.proto";
+
+// Sending messages. Every message of an instance, direct or bulk, goes through a single
+// outbound queue, so the pacing limits cannot be bypassed by sending in parallel.
+// Failures are reported with standard gRPC status codes. Some failures also carry a
+// google.rpc.ErrorInfo detail with a reason from the ErrorReason enum.
+// An idempotency key is known for 24 hours. The same message to the same recipient is refused
+// for 10 minutes (the repeat guard).
+service MessageService {
+  // Sends one message and answers once WhatsApp accepted it. Direct messages go ahead of bulk
+  // jobs. ERROR_REASON_INSTANCE_QUEUE_FULL means too many direct messages are waiting.
+  // With a known idempotency_key and the same request, the core returns the stored provider
+  // message id at once, with replayed true, and sends nothing.
+  rpc SendPlainText (SendPlainTextRequest) returns (SendPlainTextResponse);
+  // Bulk sends are stored and processed in the background. They survive restarts of the core.
+  rpc SendBulkSameMessage (SendBulkSameMessageRequest) returns (BulkJob);
+  // Like SendBulkSameMessage, but each message has its own text.
+  rpc SendBulkCustomMessages (SendBulkCustomMessagesRequest) returns (BulkJob);
+  // Returns the current state of a job. An unknown id gives NOT_FOUND.
+  rpc GetBulkJob (GetBulkJobRequest) returns (BulkJob);
+  // Returns the jobs the core has for 1 to 50 ids, in one read. A missing id is left out with
+  // no error. Each job appears once. The order of the answer is not defined.
+  rpc GetBulkJobs (GetBulkJobsRequest) returns (GetBulkJobsResponse);
+  // Stops a job. Messages that were already sent are not affected.
+  rpc CancelBulkJob (CancelBulkJobRequest) returns (BulkJob);
+}
+
+// One text message to one recipient.
+message SendPlainTextRequest {
+  // The instance that sends the message.
+  string instance_name = 1;
+  // A phone number with country code ("34600111222") or, for WhatsApp Web, a full JID
+  // ("34600111222@s.whatsapp.net", "1234567890@lid", "1203630...@g.us").
+  string to = 2;
+  // The text of the message, sent unchanged. It cannot be empty or only spaces.
+  string text = 3;
+  // 1 to 255 printable ASCII characters. Use a new key for each message and the same key to
+  // retry it. Absent means no key.
+  optional string idempotency_key = 4;
+}
+
+// A message that WhatsApp accepted.
+message SendPlainTextResponse {
+  // The id of the message in WhatsApp. The message.status events have the same id.
+  string message_id = 1;
+  // True when the core answered from an earlier send with the same key and sent nothing.
+  bool replayed = 2;
+}
+
+// The reason of a failure. The core sends the name of the value as google.rpc.ErrorInfo.reason,
+// with the domain "calyx.core.v1". No message field uses this enum.
+enum ErrorReason {
+  // No reason. Calyx never sends it.
+  ERROR_REASON_UNSPECIFIED = 0;
+  // Code ALREADY_EXISTS, no metadata. The key belongs to another message on this instance.
+  // Next step: use a new key for a new message.
+  ERROR_REASON_IDEMPOTENCY_KEY_CONFLICT = 1;
+  // Code ABORTED, no metadata. A send with this key is in progress. A RetryInfo detail gives
+  // the wait.
+  // Next step: wait for the time in RetryInfo and retry with the same key.
+  ERROR_REASON_SEND_IN_PROGRESS = 2;
+  // Code ALREADY_EXISTS, metadata "at". The outcome of the send with this key is unknown.
+  // Next step: check the chat. To send again, use a new key after the time in "at" plus 10 minutes.
+  ERROR_REASON_SEND_OUTCOME_UNKNOWN = 3;
+  // Code ALREADY_EXISTS, metadata "at", and "message_id" when the earlier send went out.
+  // The repeat guard: the same message to the same recipient is in progress, or it went out or
+  // got an unknown outcome less than 10 minutes ago.
+  // Next step: do not send it again. To send it anyway, change the message, or wait until the
+  // earlier send is finished and 10 minutes after "at" have passed.
+  ERROR_REASON_DUPLICATE_MESSAGE = 4;
+  // Code RESOURCE_EXHAUSTED, a RetryInfo detail. Too many direct messages wait on this instance.
+  // Next step: wait for the time of RetryInfo and retry with the same key, or use a bulk job.
+  ERROR_REASON_INSTANCE_QUEUE_FULL = 5;
+}
+
+// Range in milliseconds (delays, pause durations) or in number of messages (pause_every).
+message IntRange {
+  // The smallest value, included.
+  int32 min = 1;
+  // The largest value, included. WHATSAPP_WEB refuses a range with equal values.
+  int32 max = 2;
+}
+
+// Optional pacing overrides. Values below the limits of the provider are rejected. META_CLOUD
+// ignores pause_every and pause_duration.
+message BulkPacing {
+  // Time between two messages.
+  optional IntRange delay = 1;
+  // Take a longer break after this many messages.
+  optional IntRange pause_every = 2;
+  // The length of a pause, in milliseconds. META_CLOUD takes no pauses: it ignores pause_every and
+  // pause_duration.
+  optional IntRange pause_duration = 3;
+}
+
+// A new bulk job: one text for many recipients.
+message SendBulkSameMessageRequest {
+  // The instance that sends the messages.
+  string instance_name = 1;
+  // 1 or more recipients, in the format of SendPlainTextRequest.to. Each recipient can be in the
+  // list only once.
+  repeated string recipients = 2;
+  // The text of the message, sent unchanged. It cannot be empty or only spaces.
+  string text = 3;
+  // The pacing of the job. Absent means the default of the provider.
+  optional BulkPacing pacing = 4;
+  // Same format as in SendPlainTextRequest. A known key returns the job of the first request.
+  optional string idempotency_key = 5;
+}
+
+// One message of a bulk job.
+message PlainTextPayload {
+  // The recipient, in the format of SendPlainTextRequest.to.
+  string to = 1;
+  // The text of the message, sent unchanged. It cannot be empty or only spaces.
+  string text = 2;
+  // Fixed time to wait before this message instead of a random one.
+  optional int32 delay_ms = 3;
+}
+
+// A new bulk job: messages with their own texts.
+message SendBulkCustomMessagesRequest {
+  // The instance that sends the messages.
+  string instance_name = 1;
+  // 1 or more messages. Each recipient can have at most 2 of them.
+  repeated PlainTextPayload messages = 2;
+  // The pacing of the job. Absent means the default of the provider.
+  optional BulkPacing pacing = 3;
+  // Same format as in SendPlainTextRequest. A known key returns the job of the first request.
+  optional string idempotency_key = 4;
+}
+
+// The status of a bulk job.
+enum BulkJobStatus {
+  // No value. Calyx never gives it.
+  BULK_JOB_STATUS_UNSPECIFIED = 0;
+  // The first status of every job. The job waits for the older jobs of the same instance to end.
+  BULK_JOB_STATUS_QUEUED = 1;
+  // The job sends its messages. It can also wait, for example for the delay of a message or until
+  // its instance is connected.
+  BULK_JOB_STATUS_RUNNING = 2;
+  // Every message was tried. Some of them can have failed.
+  BULK_JOB_STATUS_COMPLETED = 3;
+  // CancelBulkJob stopped the job. Its waiting messages are never sent.
+  BULK_JOB_STATUS_CANCELLED = 4;
+  // The job could not continue, for example because the instance lost its session.
+  BULK_JOB_STATUS_FAILED = 5;
+}
+
+// A bulk job: many messages that one instance sends in the background, with delays between them.
+message BulkJob {
+  // The id of the job, a UUID.
+  string id = 1;
+  // The instance that sends the messages.
+  string instance_name = 2;
+  // The status of the job. QUEUED is the first status of every job.
+  BulkJobStatus status = 3;
+  // The number of messages in the job.
+  int32 total_messages = 4;
+  // The number of messages that WhatsApp accepted.
+  int32 sent_messages = 5;
+  // The number of messages that failed or have an unknown result. The job does not try them again.
+  int32 failed_messages = 6;
+  // Processed messages (sent + failed) over the total, from 0 to 100.
+  float progress_percent = 7;
+  // Planned duration of the whole job if nothing fails.
+  float estimated_minutes = 8;
+  // The planned duration as text, in minutes and seconds, for example "12m 5s".
+  string display_time = 9;
+  // When the job was created, in UTC.
+  google.protobuf.Timestamp created_at = 10;
+  // When the job started, in UTC. Absent when it has not started.
+  optional google.protobuf.Timestamp started_at = 11;
+  // When the job will probably finish, in UTC. Absent when status is not RUNNING.
+  optional google.protobuf.Timestamp estimated_finish_at = 12;
+  // When the job was completed, was cancelled or failed, in UTC. Absent before that.
+  optional google.protobuf.Timestamp finished_at = 13;
+  // Why the job failed, a sentence for people. Absent when status is not FAILED.
+  optional string error = 14;
+  // True only in the answer to a replayed create (a known idempotency key). GetBulkJob and
+  // CancelBulkJob give false.
+  bool replayed = 15;
+}
+
+// Selects the job of GetBulkJob.
+message GetBulkJobRequest {
+  // The id of the job, a UUID.
+  string job_id = 1;
+}
+
+// Selects the jobs of GetBulkJobs.
+message GetBulkJobsRequest {
+  // 1 to 50 ids. No ids, or more than 50, gives INVALID_ARGUMENT.
+  repeated string job_ids = 1;
+}
+
+// The answer of GetBulkJobs.
+message GetBulkJobsResponse {
+  // Only the jobs the core has, each once, in no defined order.
+  repeated BulkJob jobs = 1;
+}
+
+// Selects the job of CancelBulkJob.
+message CancelBulkJobRequest {
+  // The id of the job, a UUID.
+  string job_id = 1;
+}

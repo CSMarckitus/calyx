@@ -1,0 +1,20 @@
+Subject: [Calyx] {{.InstanceName}} must be paired again
+
+Hello,
+
+The WhatsApp Web instance "{{.InstanceName}}" of the client "{{.ClientName}}" ({{.OrganizationName}}) lost its session. Its status is {{.Status}} since {{.Since.UTC.Format "2006-01-02 15:04 UTC"}}.
+
+Usual cause: the linked device was removed on the phone, or the phone was offline for a long time.
+
+The instance cannot send or receive messages until it is paired again. To pair it again:
+
+Open {{.Link}} in Calyx. Then select "Reconnect" and follow the steps.
+
+With the API: send POST {{.APILink}}/pair with {"pairing":"qr"} or {"pairing":"code","phone":"<number with country code>"}, then follow GET {{.APILink}}/pairing
+
+The webhooks and the settings of the instance are kept.
+
+You receive this mail once for this problem.
+
+-- 
+Calyx at {{.PublicURL}}

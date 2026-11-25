@@ -1,0 +1,60 @@
+{
+  "cases": [
+    {
+      "name": "problem with request id and retry-after",
+      "status": 429,
+      "headers": {"Content-Type": "application/problem+json", "X-Request-Id": "r1", "Retry-After": "60"},
+      "body": "{\"status\":429,\"code\":\"rate_limited\",\"detail\":\"Too many requests.\"}",
+      "expected": {"source": "backend", "code": "rate_limited", "status": 429, "detail": "Too many requests.", "retry": "retry_later", "requestId": "r1", "retryAfterSeconds": 60, "errors": []}
+    },
+    {
+      "name": "empty retry-after",
+      "status": 429,
+      "headers": {"Content-Type": "application/problem+json", "X-Request-Id": "r2", "Retry-After": ""},
+      "body": "{\"status\":429,\"code\":\"rate_limited\",\"detail\":\"Too many requests.\"}",
+      "expected": {"source": "backend", "code": "rate_limited", "status": 429, "detail": "Too many requests.", "retry": "retry_later", "requestId": "r2", "retryAfterSeconds": 0, "errors": []}
+    },
+    {
+      "name": "negative retry-after",
+      "status": 429,
+      "headers": {"Content-Type": "application/problem+json", "X-Request-Id": "r3", "Retry-After": "-5"},
+      "body": "{\"status\":429,\"code\":\"rate_limited\",\"detail\":\"Too many requests.\"}",
+      "expected": {"source": "backend", "code": "rate_limited", "status": 429, "detail": "Too many requests.", "retry": "retry_later", "requestId": "r3", "retryAfterSeconds": 0, "errors": []}
+    },
+    {
+      "name": "html body",
+      "status": 502,
+      "headers": {"Content-Type": "text/html"},
+      "body": "<html><body>Bad Gateway</body></html>",
+      "expected": {"source": "client", "code": "invalid_response", "status": 0, "detail": "The backend answered 502 with a body that is not problem+json.", "retry": "retry_now", "requestId": "", "retryAfterSeconds": 0, "errors": []}
+    },
+    {
+      "name": "empty body",
+      "status": 500,
+      "headers": {},
+      "body": "",
+      "expected": {"source": "client", "code": "invalid_response", "status": 0, "detail": "The backend answered 500 with a body that is not problem+json.", "retry": "retry_now", "requestId": "", "retryAfterSeconds": 0, "errors": []}
+    },
+    {
+      "name": "unknown code",
+      "status": 422,
+      "headers": {"Content-Type": "application/problem+json", "X-Request-Id": "r4"},
+      "body": "{\"status\":422,\"code\":\"brand_new\",\"detail\":\"A rule of a newer backend.\"}",
+      "expected": {"source": "backend", "code": "brand_new", "status": 422, "detail": "A rule of a newer backend.", "retry": "unknown", "requestId": "r4", "retryAfterSeconds": 0, "errors": []}
+    },
+    {
+      "name": "problem with field errors",
+      "status": 422,
+      "headers": {"Content-Type": "application/problem+json", "X-Request-Id": "r5"},
+      "body": "{\"status\":422,\"code\":\"invalid_request\",\"detail\":\"The request is not valid.\",\"errors\":[{\"location\":\"body.to\",\"message\":\"must not be empty\"},{\"location\":\"body.text\",\"message\":\"is too long\"}]}",
+      "expected": {"source": "backend", "code": "invalid_request", "status": 422, "detail": "The request is not valid.", "retry": "do_not_retry", "requestId": "r5", "retryAfterSeconds": 0, "errors": [{"location": "body.to", "message": "must not be empty"}, {"location": "body.text", "message": "is too long"}]}
+    },
+    {
+      "name": "instance queue full with retry-after",
+      "status": 429,
+      "headers": {"Content-Type": "application/problem+json", "X-Request-Id": "r6", "Retry-After": "12"},
+      "body": "{\"status\":429,\"code\":\"instance_queue_full\",\"detail\":\"The queue of the instance is full.\"}",
+      "expected": {"source": "backend", "code": "instance_queue_full", "status": 429, "detail": "The queue of the instance is full.", "retry": "retry_later", "requestId": "r6", "retryAfterSeconds": 12, "errors": []}
+    }
+  ]
+}

@@ -1,0 +1,45 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "calyx-client-sdk"
+# src/calyx_client_sdk/_version.py has the same value. A test compares them.
+version = "0.1.0"
+description = "Python client for the Calyx backend API, with webhook checks."
+readme = "README.md"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+authors = [{ name = "CSMarckitus", email = "88045486+CSMarckitus@users.noreply.github.com" }]
+requires-python = ">=3.12"
+dependencies = ["httpcore2[asyncio]>=2.16,<3"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/calyx_client_sdk"]
+
+[tool.pytest]
+strict = true
+testpaths = ["tests"]
+addopts = ["--import-mode=importlib"]
+# The tests share the modules fake_server and certificates.
+pythonpath = ["tests"]
+# A warning is an error. This includes a socket or a file that the code did not close.
+filterwarnings = ["error"]
+# The run stops when one test takes more than 10 s.
+faulthandler_timeout = 10
+faulthandler_exit_on_timeout = true
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+# BLE refuses "except Exception". The SDK catches named errors only.
+select = ["E4", "E7", "E9", "F", "ASYNC", "B", "BLE", "I", "UP"]
+
+[tool.mypy]
+strict = true
+python_version = "3.12"
+
+[tool.pyright]
+typeCheckingMode = "strict"
+pythonVersion = "3.12"

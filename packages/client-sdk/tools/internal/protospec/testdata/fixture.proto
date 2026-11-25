@@ -1,0 +1,55 @@
+syntax = "proto3";
+
+package fixture.v1;
+
+import "google/protobuf/timestamp.proto";
+
+// A comment that belongs to nothing.
+
+// Calls of the fixture.
+service FixtureService {
+  // One answer.
+  rpc Get (Thing) returns (Answer);
+  // Many answers.
+  rpc Watch (Thing) returns (stream Answer);
+  rpc Upload (stream Thing) returns (Answer); // Many requests.
+}
+
+// The color of a thing.
+enum PaintColor {
+  // No color.
+  PAINT_COLOR_UNSPECIFIED = 0;
+  PAINT_COLOR_RED = 5; // "Red"
+}
+
+// A thing with a field
+// of each kind.
+message Thing {
+  reserved 1;
+
+  // The name.
+  string name = 2;
+  // Has   two
+  //
+  // paragraphs.
+  optional string nick = 3;
+  bool is_new = 4; // At the end.
+  int32 count = 5;
+  optional int64 big = 6;
+  float ratio = 7;
+  bytes raw = 8;
+  PaintColor color = 9;
+  Answer plain = 10;
+  optional Answer maybe = 11;
+  repeated Answer answers = 12;
+  repeated string tags = 13;
+  map<string, int32> totals = 14;
+  google.protobuf.Timestamp made_at = 15;
+  oneof choice {
+    // The first choice.
+    Answer one = 16;
+    bool two = 17;
+  }
+}
+
+message Answer {}

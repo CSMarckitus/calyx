@@ -1,0 +1,13 @@
+{
+  "name": "@calyx/client-sdk-python",
+  "private": true,
+  "license": "Apache-2.0",
+  "description": "Python client for the Calyx backend and core APIs, with webhook checks.",
+  "scripts": {
+    "test": "docker/run.sh test && docker/run.sh test-core",
+    "vet": "docker/run.sh types",
+    "lint": "docker/run.sh lint",
+    "generate": "(cd ../tools && go run ./cmd/pygen && go run ./cmd/pygen -core) && docker/run.sh protoc",
+    "generate:check": "(cd ../tools && go run ./cmd/pygen -check && go run ./cmd/pygen -core -check) && docker/run.sh protoc-check"
+  }
+}
